@@ -1,102 +1,83 @@
 """
-Re-Ranking Module
-=================
-Cross-encoder re-ranking for improved retrieval precision.
-Uses sentence-transformers with a lightweight cross-encoder model
-to score (query, document) pairs and return the most relevant results.
+Re-Ranking Module (API-Based)
+=============================
+Uses Cohere's Rerank API to provide high-precision document ranking
+without consuming server RAM. 100% compatible with Render Free Tier.
 """
 
+import os
 import logging
-from typing import Optional
-
+import requests
+from typing import Optional, List
 from langchain_core.documents import Document
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Configuration
-# ---------------------------------------------------------------------------
-
-RERANKER_MODEL_NAME = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-
-# Lazy-loaded singleton — avoids startup cost
-_reranker_model = None
-
-
-# ---------------------------------------------------------------------------
-# Model Loading
-# ---------------------------------------------------------------------------
-
-def _load_reranker():
-    """Disabled for low-RAM environments (Render Free Tier)."""
-    # Cross-encoders are memory-intensive. Disabling to stay under 512MB.
-    return None
-
-
-# ---------------------------------------------------------------------------
-# Re-Ranking
-# ---------------------------------------------------------------------------
+COHERE_API_KEY = os.getenv("COHERE_API_KEY")
+RERANK_MODEL = "rerank-english-v3.0"  # High performance model
 
 def rerank(
     query: str,
-    documents: list[Document],
+    documents: List[Document],
     top_n: int = 4,
-    min_score: Optional[float] = None,
-) -> list[tuple[Document, float]]:
+) -> List[tuple[Document, float]]:
     """
-    Re-rank retrieved documents using the cross-encoder model.
-    
-    Each (query, document.page_content) pair is scored by the cross-encoder,
-    and the documents are returned sorted by relevance score (descending).
+    Re-rank documents using Cohere's API.
     
     Args:
-        query: The user's search query
-        documents: List of candidate documents from initial retrieval
-        top_n: Number of top documents to return
-        min_score: Optional minimum score threshold; documents below this
-                   are filtered out
-    
-    Returns:
-        List of (Document, score) tuples, sorted by descending relevance.
-        Falls back to original order with score=0.0 if model is unavailable.
+        query: User search query
+        documents: List of candidate LangChain Documents
+        top_n: Number of results to return
     """
     if not documents:
         return []
 
-    model = _load_reranker()
-
-    if model is None:
-        # Fallback: return original order with neutral scores
+    if not COHERE_API_KEY:
+        logger.warning("COHERE_API_KEY not found. Skipping re-ranking and returning original results.")
         return [(doc, 0.0) for doc in documents[:top_n]]
-
-    # Build query-document pairs for scoring
-    pairs = [(query, doc.page_content) for doc in documents]
 
     try:
-        scores = model.predict(pairs)
+        # Prepare docs for Cohere API (extracting text)
+        doc_texts = [doc.page_content for doc in documents]
+        
+        url = "https://api.cohere.ai/v1/rerank"
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "authorization": f"Bearer {COHERE_API_KEY}"
+        }
+        payload = {
+            "model": RERANK_MODEL,
+            "query": query,
+            "documents": doc_texts,
+            "top_n": top_n
+        }
+
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        results = response.json().get("results", [])
+        
+        # Map API results back to LangChain Documents
+        ranked_docs = []
+        for res in results:
+            idx = res["index"]
+            score = res["relevance_score"]
+            ranked_docs.append((documents[idx], score))
+            
+        return ranked_docs
+
     except Exception as e:
-        logger.error(f"Re-ranking prediction failed: {e}")
+        logger.error(f"Cohere Re-ranking failed: {e}")
+        # Fallback to original order
         return [(doc, 0.0) for doc in documents[:top_n]]
-
-    # Pair documents with their scores and sort descending
-    scored_docs = list(zip(documents, scores))
-    scored_docs.sort(key=lambda x: x[1], reverse=True)
-
-    # Apply minimum score filter if specified
-    if min_score is not None:
-        scored_docs = [(doc, s) for doc, s in scored_docs if s >= min_score]
-
-    # Return top-N
-    return scored_docs[:top_n]
-
 
 def rerank_simple(
     query: str,
-    documents: list[Document],
+    documents: List[Document],
     top_n: int = 4,
-) -> list[Document]:
-    """
-    Convenience wrapper: returns just the re-ranked documents without scores.
-    """
+) -> List[Document]:
+    """Convenience wrapper that returns only Document objects."""
     ranked = rerank(query, documents, top_n=top_n)
     return [doc for doc, _score in ranked]
