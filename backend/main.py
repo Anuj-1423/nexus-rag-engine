@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Enterprise Brain RAG API")
 
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
 # Ensure directories exist
 os.makedirs("temp_uploads", exist_ok=True)
 os.makedirs("storage/vectors", exist_ok=True)
@@ -33,7 +37,14 @@ app.mount("/profiles", StaticFiles(directory="storage/profiles"), name="profiles
 
 @app.on_event("startup")
 def startup_event():
-    init_db()
+    try:
+        logger.info("Starting up: Initializing database...")
+        init_db()
+        logger.info("Database initialized successfully.")
+    except Exception as e:
+        logger.error(f"FATAL: Database initialization failed: {e}")
+        # We don't raise here so the server can at least start and show a health check,
+        # but the app won't work until DB is fixed.
 
 SUPPORTED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.csv'}
 
