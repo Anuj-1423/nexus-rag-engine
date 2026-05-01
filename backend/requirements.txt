@@ -8,6 +8,8 @@ langchain
 langchain-community
 langchain-huggingface
 langchain-chroma
+langchain-experimental
+langchain-text-splitters
 pypdf
 python-docx
 google-genai
