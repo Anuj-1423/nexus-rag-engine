@@ -11,6 +11,7 @@ DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_USER = os.getenv('DB_USER', 'root')
 DB_PASSWORD = os.getenv('DB_PASSWORD', 'Ishan@1423')
 DB_NAME = os.getenv('DB_NAME', 'enterprise_rag')
+DB_PORT = int(os.getenv('DB_PORT', 3306))
 
 def get_db_connection(database=None):
     """Creates a fresh connection to the MySQL server."""
@@ -19,6 +20,7 @@ def get_db_connection(database=None):
             'host': DB_HOST,
             'user': DB_USER,
             'password': DB_PASSWORD,
+            'port': DB_PORT,
             'autocommit': True
         }
         if database:
