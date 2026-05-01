@@ -76,8 +76,8 @@ def get_embeddings():
     global _hf_embeddings
     if _hf_embeddings is None:
         logger.info("Initializing Google Generative AI Embeddings...")
-        # Uses 'text-embedding-004' which is lightweight (on your server) and high quality
-        _hf_embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+        # Uses 'embedding-001' which is the most stable and widely supported model
+        _hf_embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
     return _hf_embeddings
 
 # ---------------------------------------------------------------------------
