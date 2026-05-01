@@ -153,11 +153,17 @@ cython_debug/
 .vscode/
 
 # Project Specific
+storage/
+temp_uploads/
 backend/storage/
 backend/temp_uploads/
+**/storage/
+**/temp_uploads/
 backend/__pycache__/
 frontend/__pycache__/
 *.txt
 *.json
 !requirements.txt
 !package.json
+!composer.json
+!.gitignore
