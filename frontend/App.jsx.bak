@@ -1,0 +1,15 @@
+import {useState} from 'react';
+import axios from 'axios';
+export default function App(){
+ const [q,setQ]=useState(''); const [ans,setAns]=useState('');
+ const ask=async()=>{
+   const r=await axios.post('http://localhost:8000/ask',{email:'demo@x.com',question:q});
+   setAns(r.data.answer)
+ }
+ return <div className='p-8'>
+   <h1>Enterprise RAG</h1>
+   <input value={q} onChange={e=>setQ(e.target.value)} placeholder='Ask question'/>
+   <button onClick={ask}>Ask</button>
+   <p>{ans}</p>
+ </div>
+}

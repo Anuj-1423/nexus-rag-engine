@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth overflow-x-hidden">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Models - Enterprise RAG Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function applyTheme() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        applyTheme();
+        window.addEventListener('storage', (e) => { if (e.key === 'theme') applyTheme(); });
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (!menu) return;
+            menu.classList.toggle('hidden');
+            document.body.style.overflow = menu.classList.contains('hidden') ? '' : 'hidden';
+        }
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: "var(--primary)", "primary-hover": "var(--primary-hover)", "bg-surface": "var(--bg-surface)", "bg-card": "var(--bg-card)", "text-main": "var(--text-main)", "text-muted": "var(--text-muted)", border: "var(--border)" } } }
+        }
+    </script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+        }
+
+        .mcard {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .mcard:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(53, 37, 205, 0.12);
+        }
+
+        .bar-fill {
+            transition: width 1s ease-out;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .gt {
+            background: linear-gradient(135deg, #3525cd, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+    </style>
+</head>
+
+<body class="bg-bg-surface text-text-main antialiased">
+
+    <!-- Nav -->
+    <nav id="mainNav"
+        class="fixed top-0 left-0 right-0 z-50 bg-bg-surface border-b border-border transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <a href="index.html" class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-brain text-xl"></i></div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">ENTRAG</span>
+            </a>
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="index.html" class="text-text-muted hover:text-primary font-medium transition-colors">Home</a>
+                <a href="features.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Features</a>
+                <a href="models.html" class="text-primary font-semibold">Models</a>
+                <a href="contact.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Contact</a>
+                <div class="h-6 w-px bg-border"></div>
+                <button id="themeToggle"
+                    class="text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <a href="login.html"
+                    class="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105 shadow-md flex items-center gap-2">
+                    Login <i class="fa-solid fa-arrow-right text-sm"></i>
+                </a>
+            </div>
+
+            <!-- Mobile Toggle -->
+            <div class="flex items-center gap-1 md:hidden">
+                <button id="themeToggleMobile"
+                    class="text-text-muted w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <button onclick="toggleMobileMenu()"
+                    class="text-text-main w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-[100] md:hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleMobileMenu()"></div>
+        <div
+            class="absolute right-0 top-0 bottom-0 w-72 bg-bg-surface border-l border-border p-8 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-10">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight">Menu</span>
+                </div>
+                <button onclick="toggleMobileMenu()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="flex flex-col gap-2 flex-1">
+                <a href="index.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-house w-6 text-xl"></i> Home
+                </a>
+                <a href="features.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-layer-group w-6 text-xl"></i> Features
+                </a>
+                <a href="models.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-primary bg-primary/10 font-bold transition-all">
+                    <i class="fa-solid fa-microchip w-6 text-xl"></i> Models
+                </a>
+                <a href="contact.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-envelope w-6 text-xl"></i> Contact
+                </a>
+                <div class="h-px bg-border my-6"></div>
+                <a href="login.html"
+                    class="bg-primary text-white p-4 rounded-2xl font-bold text-center shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Login</a>
+                <a href="register.html"
+                    class="border border-border text-text-main p-4 rounded-2xl font-bold text-center hover:bg-gray-50 dark:hover:bg-slate-800 transition-all mt-3">Register</a>
+            </div>
+            <div class="mt-auto pt-8 border-t border-border">
+                <p class="text-[10px] uppercase tracking-widest font-black text-text-muted mb-4 text-center">Connected
+                    to Enterprise RAG</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Hero -->
+    <section class="pt-32 pb-20"
+        style="background: radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.10) 0%, transparent 70%);">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-600 text-sm font-semibold mb-6 border border-purple-200 dark:border-purple-800">
+                        <i class="fa-solid fa-microchip text-xs"></i> Foundation Models</div>
+                    <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">Choose Your <br /><span
+                            class="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-primary">AI
+                            Engine</span></h1>
+                    <p class="text-xl text-text-muted leading-relaxed mb-8">ENTRAG supports multiple industry-leading
+                        Large Language Models. Swap between them on the fly or configure each knowledge base to use the
+                        model best suited for its content and use case.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="login.html"
+                            class="bg-primary hover:bg-primary-hover text-white px-7 py-3.5 rounded-xl font-semibold transition-all shadow-lg flex items-center gap-2">Try
+                            Now <i class="fa-solid fa-play text-sm"></i></a>
+                        <a href="contact.html"
+                            class="border border-border hover:border-primary text-text-main px-7 py-3.5 rounded-xl font-semibold transition-all">Custom
+                            Model?</a>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-primary/20 rounded-3xl blur-2xl">
+                    </div>
+                    <img src="images/models_hero.png" alt="AI Language Models Visualization"
+                        class="relative rounded-3xl shadow-2xl w-full object-cover">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Model Cards -->
+    <section class="py-20 border-y border-border bg-black/5 dark:bg-white/5">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-14">
+                <h2 class="text-4xl font-bold mb-4">Supported Models</h2>
+                <p class="text-text-muted text-xl max-w-2xl mx-auto">Each model is fully integrated via our unified API.
+                    No configuration required — just select and start querying.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <!-- Llama 3 -->
+                <div class="card p-8 mcard relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full -translate-y-8 translate-x-8">
+                    </div>
+                    <div class="flex items-start justify-between mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-2xl text-orange-500">
+                            <i class="fa-solid fa-microchip"></i></div>
+                        <span class="badge bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"><i
+                                class="fa-solid fa-circle text-xs"></i> Available</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1">Llama 3</h3>
+                    <p class="text-text-muted text-sm mb-4 font-medium">Meta AI &bull; 8B / 70B Parameters</p>
+                    <p class="text-text-muted leading-relaxed mb-6">Meta's flagship open-source model delivers
+                        outstanding reasoning and instruction-following capabilities. Ideal for large-scale enterprise
+                        RAG workloads requiring on-premise deployment with no licensing costs.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span
+                                    class="font-medium">Reasoning</span><span class="text-text-muted">92%</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-orange-500 rounded-full bar-fill" style="width:92%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Speed</span><span
+                                    class="text-text-muted">88%</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-orange-500 rounded-full bar-fill" style="width:88%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Context
+                                    Length</span><span class="text-text-muted">128K</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-orange-500 rounded-full bar-fill" style="width:80%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex flex-wrap gap-2">
+                        <span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Open
+                            Source</span>
+                        <span
+                            class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">On-Premise</span>
+                        <span
+                            class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Free</span>
+                    </div>
+                </div>
+
+                <!-- Mistral -->
+                <div class="card p-8 mcard relative overflow-hidden border-primary/30"
+                    style="box-shadow: 0 0 0 2px rgba(53,37,205,0.15);">
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-8 translate-x-8">
+                    </div>
+                    <div class="absolute top-4 right-4"><span
+                            class="badge bg-primary/10 text-primary border border-primary/20"><i
+                                class="fa-solid fa-star text-xs"></i> Recommended</span></div>
+                    <div class="flex items-start justify-between mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-2xl text-primary">
+                            <i class="fa-solid fa-wind"></i></div>
+                        <span class="badge bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"><i
+                                class="fa-solid fa-circle text-xs"></i> Available</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1">Mistral 8x7B</h3>
+                    <p class="text-text-muted text-sm mb-4 font-medium">Mistral AI &bull; Mixture of Experts</p>
+                    <p class="text-text-muted leading-relaxed mb-6">Mistral's sparse Mixture-of-Experts architecture
+                        delivers GPT-4 class performance at a fraction of the cost. The best balance of speed, accuracy,
+                        and cost efficiency for most enterprise RAG use cases.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span
+                                    class="font-medium">Reasoning</span><span class="text-text-muted">95%</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-primary rounded-full bar-fill" style="width:95%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Speed</span><span
+                                    class="text-text-muted">94%</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-primary rounded-full bar-fill" style="width:94%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Context
+                                    Length</span><span class="text-text-muted">32K</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-primary rounded-full bar-fill" style="width:70%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex flex-wrap gap-2">
+                        <span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">MoE
+                            Architecture</span>
+                        <span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Best
+                            Value</span>
+                    </div>
+                </div>
+
+                <!-- GPT-4 -->
+                <div class="card p-8 mcard relative overflow-hidden">
+                    <div
+                        class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -translate-y-8 translate-x-8">
+                    </div>
+                    <div class="flex items-start justify-between mb-6">
+                        <div
+                            class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-500">
+                            <i class="fa-solid fa-brain"></i></div>
+                        <span class="badge bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"><i
+                                class="fa-solid fa-circle text-xs"></i> Available</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-1">GPT-4 Turbo</h3>
+                    <p class="text-text-muted text-sm mb-4 font-medium">OpenAI &bull; 128K Context Window</p>
+                    <p class="text-text-muted leading-relaxed mb-6">OpenAI's most capable model with a massive 128K
+                        token context window. Perfect for complex analytical queries over very large documents or when
+                        maximum accuracy on nuanced enterprise knowledge is non-negotiable.</p>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span
+                                    class="font-medium">Reasoning</span><span class="text-text-muted">98%</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full bar-fill" style="width:98%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Speed</span><span
+                                    class="text-text-muted">79%</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full bar-fill" style="width:79%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Context
+                                    Length</span><span class="text-text-muted">128K</span></div>
+                            <div class="h-2 bg-border rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full bar-fill" style="width:99%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex flex-wrap gap-2">
+                        <span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">Highest
+                            Accuracy</span>
+                        <span class="badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">API Key
+                            Required</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benchmark Image Section -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-6 border border-primary/20">
+                        <i class="fa-solid fa-chart-bar text-xs"></i> Benchmark Results</div>
+                    <h2 class="text-4xl font-bold mb-4">Performance That Speaks for Itself</h2>
+                    <p class="text-text-muted text-lg leading-relaxed mb-8">We rigorously benchmark every model on
+                        enterprise RAG tasks including document retrieval accuracy, hallucination rate, citation
+                        precision, and query latency. Pick the model that fits your SLA and budget.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-4 p-4 card rounded-xl">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-trophy text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-sm">RAG Benchmark Suite</h4>
+                                <p class="text-text-muted text-sm">Tested on 50,000 enterprise Q&amp;A pairs across
+                                    Finance, Legal, and HR domains.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 card rounded-xl">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-vial text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-sm">Hallucination Rate Testing</h4>
+                                <p class="text-text-muted text-sm">All models scored below 2% hallucination rate in
+                                    closed-book RAG settings.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 p-4 card rounded-xl">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-stopwatch text-sm"></i></div>
+                            <div>
+                                <h4 class="font-bold text-sm">Latency P95 Under 200ms</h4>
+                                <p class="text-text-muted text-sm">All supported models meet our sub-200ms P95 query
+                                    latency SLA in production.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-3xl blur-2xl">
+                    </div>
+                    <img src="images/models_benchmark.png" alt="AI Model Performance Benchmarks"
+                        class="relative rounded-3xl shadow-2xl w-full object-cover">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Embedding Models -->
+    <section class="py-20 bg-black/5 dark:bg-white/5 border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-14">
+                <h2 class="text-4xl font-bold mb-4">Supported Embedding Models</h2>
+                <p class="text-text-muted text-xl max-w-2xl mx-auto">The quality of your vector search depends heavily
+                    on your embedding model. ENTRAG supports the best in class.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-6 mcard text-center">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl mx-auto mb-4">
+                        <i class="fa-solid fa-cube"></i></div>
+                    <h4 class="font-bold mb-2">text-embedding-3-large</h4>
+                    <p class="text-text-muted text-sm">OpenAI's state-of-the-art 3072-dim embedding model.</p>
+                </div>
+                <div class="card p-6 mcard text-center">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl mx-auto mb-4">
+                        <i class="fa-solid fa-atom"></i></div>
+                    <h4 class="font-bold mb-2">E5-Large-v2</h4>
+                    <p class="text-text-muted text-sm">Microsoft's powerful open-source embedding model for semantic
+                        search.</p>
+                </div>
+                <div class="card p-6 mcard text-center">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-xl mx-auto mb-4">
+                        <i class="fa-solid fa-fire"></i></div>
+                    <h4 class="font-bold mb-2">BGE-M3</h4>
+                    <p class="text-text-muted text-sm">BAAI's multilingual embedding model supporting 100+ languages.
+                    </p>
+                </div>
+                <div class="card p-6 mcard text-center">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl mx-auto mb-4">
+                        <i class="fa-solid fa-leaf"></i></div>
+                    <h4 class="font-bold mb-2">Sentence-BERT</h4>
+                    <p class="text-text-muted text-sm">Lightweight, fast, and accurate for most enterprise document
+                        types.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 bg-gradient-to-r from-primary to-purple-600">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-extrabold text-white mb-4">Not Sure Which Model to Choose?</h2>
+            <p class="text-white/80 text-xl mb-10">Our enterprise team will help you pick the right LLM and embedding
+                model combination for your specific documents and query patterns.</p>
+            <a href="contact.html"
+                class="bg-white text-primary font-bold px-10 py-4 rounded-xl transition-all hover:scale-105 shadow-xl inline-block">Talk
+                to an Expert</a>
+        </div>
+    </section>
+    <footer class="py-16 bg-bg-card border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between gap-12 mb-16">
+                <div class="max-w-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight">ENTRAG</span>
+                    </div>
+                    <p class="text-text-muted leading-relaxed mb-6">Enterprise-grade RAG platform for modern
+                        organizations.</p>
+                    <div class="flex flex-col gap-3">
+                        <p class="text-text-muted flex items-center gap-3 text-sm"><i
+                                class="fa-solid fa-envelope text-primary w-5"></i> anujsingh41086@gmail.com</p>
+                        <p class="text-text-muted flex items-center gap-3 text-sm"><i
+                                class="fa-solid fa-phone text-primary w-5"></i> +91 7722984430</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-12">
+                    <div>
+                        <h4 class="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Product</h4>
+                        <ul class="space-y-4 text-sm">
+                            <li><a href="features.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Features</a></li>
+                            <li><a href="models.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Models</a></li>
+                            <li><a href="contact.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Company</h4>
+                        <ul class="space-y-4 text-sm">
+                            <li><a href="contact.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Contact</a></li>
+                            <li><a href="#" class="text-text-muted hover:text-primary transition-colors">About</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-text-muted">
+                <p>&copy; 2026 Enterprise RAG Platform. Developed by Anuj Singh.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtns = ['themeToggle', 'themeToggleMobile'];
+            toggleBtns.forEach(id => {
+                document.getElementById(id)?.addEventListener('click', toggleDarkMode);
+            });
+        });
+    </script>
+
+</body>
+
+</html>

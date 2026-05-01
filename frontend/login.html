@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Enterprise Brain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script>if(localStorage.getItem('theme')==='dark'||(!('theme'in localStorage)&&window.matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');</script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "var(--primary)",
+                        "primary-hover": "var(--primary-hover)",
+                        "text-main": "var(--text-main)",
+                        "text-muted": "var(--text-muted)",
+                        "border": "var(--border)",
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-text-main min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+    <!-- Background Decor -->
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] -z-10"></div>
+    <div class="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-accent/10 rounded-full blur-[120px] -z-10"></div>
+    
+    <div class="max-w-md w-full">
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-20 h-20 glass rounded-[2rem] mb-6 shadow-2xl border-white/20">
+                <span class="material-symbols-outlined gradient-text text-4xl font-bold">hub</span>
+            </div>
+            <h1 class="text-4xl font-black tracking-tight mb-3">Welcome Back</h1>
+            <p class="text-text-muted text-lg">Access your enterprise knowledge base.</p>
+        </div>
+
+        <div class="card p-8 shadow-2xl glass border-white/10">
+            <div class="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl mb-8">
+                <button id="employeeBtn" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm text-primary">EMPLOYEE</button>
+                <button id="adminBtn" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition-all text-text-muted">ADMIN</button>
+                <a href="register.html" class="flex-1 py-2 text-[10px] font-bold rounded-lg transition-all text-text-muted flex items-center justify-center">REGISTER</a>
+            </div>
+
+            <form id="loginForm" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-black uppercase tracking-widest text-text-muted">Corporate Email</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">mail</span>
+                        <input type="email" id="email" placeholder="name@company.com" required
+                               class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl outline-none focus:border-primary transition-all font-medium">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <label class="text-xs font-black uppercase tracking-widest text-text-muted">Security Key</label>
+                        <a href="#" class="text-[10px] font-bold text-primary hover:underline">Forgot?</a>
+                    </div>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">lock</span>
+                        <input type="password" id="password" placeholder="••••••••" required
+                               class="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl outline-none focus:border-primary transition-all font-medium">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary-hover shadow-lg shadow-indigo-500/20 transition-all">Sign In to Dashboard</button>
+            </form>
+
+            <div class="mt-8 pt-8 border-t border-border text-center">
+                <p class="text-xs text-text-muted">New to the platform? <a href="register.html" class="font-bold text-primary hover:underline">Create an account</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        let selectedRole = 'employee';
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'check_circle' : (type === 'error' ? 'error' : 'info');
+            toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        document.getElementById('adminBtn').onclick = () => {
+            selectedRole = 'admin';
+            document.getElementById('adminBtn').classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-primary');
+            document.getElementById('employeeBtn').classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-primary');
+            document.getElementById('employeeBtn').classList.add('text-text-muted');
+        };
+
+        document.getElementById('employeeBtn').onclick = () => {
+            selectedRole = 'employee';
+            document.getElementById('employeeBtn').classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-primary');
+            document.getElementById('adminBtn').classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-primary');
+            document.getElementById('adminBtn').classList.add('text-text-muted');
+        };
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            if (!email || !password) return showToast('Please fill in all fields', 'error');
+
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('email', email);
+                    localStorage.setItem('role', data.role);
+                    if (data.name) localStorage.setItem('name', data.name);
+                    if (data.profile_pic) localStorage.setItem('profile_pic', data.profile_pic);
+                    else localStorage.removeItem('profile_pic');
+                    showToast('Authentication successful!', 'success');
+                    setTimeout(() => window.location.replace(data.role === 'admin' ? 'admin.html' : 'user.html'), 800);
+                } else {
+                    showToast(data.detail || 'Login failed', 'error');
+                }
+            } catch (err) {
+                showToast('Server connection failed', 'error');
+            }
+        };
+    </script>
+</body>
+</html>

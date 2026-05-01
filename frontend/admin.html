@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Panel - Knowledge Assistant</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function applyTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme:dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        applyTheme();
+        window.addEventListener('storage', (e) => { if (e.key === 'theme') applyTheme(); });
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "var(--primary)",
+                        "primary-hover": "var(--primary-hover)",
+                        "surface": "var(--bg-surface)",
+                        "border": "var(--border)",
+                        "text-main": "var(--text-main)",
+                        "text-muted": "var(--text-muted)",
+                        "bg-card": "var(--bg-card)",
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="antialiased font-['Inter']">
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar w-64 flex-shrink-0 fixed lg:static inset-y-0 left-0 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col py-6">
+            <div class="px-6 mb-10 flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <span class="material-symbols-outlined text-white">admin_panel_settings</span>
+                </div>
+                <span class="text-xl font-bold tracking-tight">Admin Console</span>
+            </div>
+            <nav class="flex-1 px-3 space-y-1">
+                <button onclick="switchTab('stats')" class="tab-btn nav-item active w-full flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="material-symbols-outlined mr-3 text-[22px]">analytics</span>Dashboard
+                </button>
+                <button onclick="switchTab('library')" class="tab-btn nav-item w-full flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="material-symbols-outlined mr-3 text-[22px]">auto_stories</span>Global Library
+                </button>
+                <button onclick="switchTab('chat')" class="tab-btn nav-item w-full flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="material-symbols-outlined mr-3 text-[22px]">forum</span>Enterprise Chat
+                </button>
+                <button onclick="switchTab('users')" class="tab-btn nav-item w-full flex items-center px-4 py-3 rounded-lg font-medium">
+                    <span class="material-symbols-outlined mr-3 text-[22px]">group</span>User Management
+                </button>
+            </nav>
+            <div class="px-6 pt-6 border-t border-gray-200 dark:border-gray-700 mt-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                        <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                        <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+                    </button>
+                    <button onclick="logout()" class="text-sm font-medium text-red-500 hover:underline">Logout</button>
+                </div>
+                <!-- User Menu -->
+                <div class="p-6 border-t border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer transition-colors" onclick="window.location.href='profile.html'">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold shadow-md overflow-hidden relative">
+                            <span id="adminInitial">A</span>
+                            <img id="adminProfilePic" src="" class="absolute inset-0 w-full h-full object-cover hidden">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold truncate" id="adminEmail">admin@enterprise.com</p>
+                            <p class="text-xs text-primary font-black tracking-widest uppercase">SUPER ADMIN</p>
+                        </div>
+                        <span class="material-symbols-outlined text-text-muted">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col min-w-0 bg-surface overflow-hidden">
+            <header class="h-16 border-b border-border bg-card flex items-center justify-between px-4 lg:px-8 shrink-0">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <h1 class="text-lg font-bold" id="pageTitle">Platform Statistics</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="startNewChat()" class="text-sm font-bold text-primary hover:bg-primary/10 px-4 py-2 rounded-lg transition-colors hidden items-center gap-2" id="newChatBtn">
+                        <span class="material-symbols-outlined text-[18px]">add_comment</span> New Chat
+                    </button>
+                    <span class="flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> SYSTEM HEALTHY
+                    </span>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8" id="contentArea">
+                <!-- Stats View -->
+                <div id="statsView" class="tab-content space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="card p-6 shadow-sm">
+                            <p class="text-xs font-black text-primary uppercase tracking-widest mb-1">Total Users</p>
+                            <h3 class="text-3xl font-bold" id="statUsers">0</h3>
+                        </div>
+                        <div class="card p-6 shadow-sm">
+                            <p class="text-xs font-black text-primary uppercase tracking-widest mb-1">Global Docs</p>
+                            <h3 class="text-3xl font-bold" id="statGlobalDocs">0</h3>
+                        </div>
+                        <div class="card p-6 shadow-sm">
+                            <p class="text-xs font-black text-primary uppercase tracking-widest mb-1">Personal Docs</p>
+                            <h3 class="text-3xl font-bold" id="statPersonalDocs">0</h3>
+                        </div>
+                        <div class="card p-6 shadow-sm">
+                            <p class="text-xs font-black text-primary uppercase tracking-widest mb-1">Total Queries</p>
+                            <h3 class="text-3xl font-bold" id="statQueries">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 card overflow-hidden shadow-sm">
+                            <div class="px-8 py-6 border-b border-border flex justify-between items-center">
+                                <h4 class="text-lg font-bold">User Activity Report</h4>
+                                <span class="text-xs font-bold text-text-muted">Total Interactions</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 dark:bg-slate-800 text-xs font-black uppercase tracking-widest text-text-muted">
+                                        <tr>
+                                            <th class="px-8 py-4">User Identity</th>
+                                            <th class="px-8 py-4">Activity Level</th>
+                                            <th class="px-8 py-4">Total Queries</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userActivityTable" class="divide-y divide-border">
+                                        <!-- Users will load here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card p-8 shadow-sm flex flex-col items-center justify-center text-center">
+                            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                                <span class="material-symbols-outlined text-3xl text-primary">monitoring</span>
+                            </div>
+                            <h4 class="text-lg font-bold">Inference Analytics</h4>
+                            <p class="text-text-muted text-sm mt-2">Deep usage patterns and cost estimation per user.</p>
+                            <button class="mt-6 text-xs font-bold text-primary hover:underline">Download CSV Report</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Library View -->
+                <div id="libraryView" class="tab-content hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Enterprise Knowledge Base</h2>
+                            <p class="text-text-muted">Upload documents that will be accessible to all users.</p>
+                        </div>
+                        <input type="file" id="fileUpload" class="hidden" onchange="handleUpload()">
+                        <button onclick="document.getElementById('fileUpload').click()" class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary-hover shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined">upload</span> Upload Global Doc
+                        </button>
+                    </div>
+                    
+                    <div id="uploadProgressContainer" class="progress-container">
+                        <div id="uploadProgressBar" class="progress-bar"></div>
+                    </div>
+                    <div class="card overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-slate-800 border-b border-border">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Document</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Status</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Uploaded At</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminDocList" class="divide-y divide-border">
+                                <!-- Docs will load here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Chat View -->
+                <div id="chatView" class="tab-content hidden h-full flex flex-col">
+                    <div id="chatMessages" class="flex-1 overflow-y-auto space-y-6 pb-24 hide-scrollbar">
+                        <div class="flex flex-col items-center justify-center py-20 opacity-50">
+                            <span class="material-symbols-outlined text-6xl mb-4">bolt</span>
+                            <p class="font-bold">Enterprise Intelligence Chat</p>
+                            <p class="text-sm">Query the global enterprise index directly.</p>
+                        </div>
+                    </div>
+                    <div class="fixed bottom-8 left-64 right-0 px-8 pointer-events-none">
+                        <div class="max-w-4xl mx-auto w-full pointer-events-auto bg-card card p-2 shadow-2xl flex items-center gap-2 border-primary/20">
+                            <input type="text" id="chatInput" placeholder="Ask anything about enterprise documents..." class="flex-1 bg-transparent border-none outline-none px-4 py-3 text-text-main">
+                            <button onclick="sendChat()" class="w-12 h-12 bg-primary text-white rounded-lg flex items-center justify-center hover:scale-105 transition-all">
+                                <span class="material-symbols-outlined">send</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users View -->
+                <div id="usersView" class="tab-content hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">User Management</h2>
+                            <p class="text-text-muted">Manage user access and block/unblock accounts.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 dark:bg-slate-800 border-b border-border">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">User</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Role</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Status</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allUsersList" class="divide-y divide-border">
+                                <!-- Users will load here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userDetailsModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 max-w-lg w-full mx-4 border border-border transform scale-95 transition-transform duration-200" id="userDetailsContent">
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-2xl font-black border-2 border-primary/20 overflow-hidden relative">
+                        <span id="udInitials">U</span>
+                        <img id="udProfilePic" src="" class="absolute inset-0 w-full h-full object-cover hidden">
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold" id="udName">User Name</h3>
+                        <p class="text-sm text-text-muted" id="udEmail">user@example.com</p>
+                    </div>
+                </div>
+                <button onclick="closeUserDetailsModal()" class="text-text-muted hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-8">
+                <div class="flex justify-between border-b border-border pb-2">
+                    <span class="text-text-muted text-sm font-bold uppercase tracking-widest">Role</span>
+                    <span class="font-medium capitalize" id="udRole">Employee</span>
+                </div>
+                <div class="flex justify-between border-b border-border pb-2">
+                    <span class="text-text-muted text-sm font-bold uppercase tracking-widest">Phone</span>
+                    <span class="font-medium" id="udPhone">N/A</span>
+                </div>
+                <div class="flex justify-between border-b border-border pb-2">
+                    <span class="text-text-muted text-sm font-bold uppercase tracking-widest">Address</span>
+                    <span class="font-medium text-right max-w-[60%]" id="udAddress">N/A</span>
+                </div>
+                <div class="flex justify-between border-b border-border pb-2">
+                    <span class="text-text-muted text-sm font-bold uppercase tracking-widest">Status</span>
+                    <span class="font-bold uppercase text-xs px-2 py-1 rounded-full" id="udStatus">Active</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-surface dark:bg-slate-800 p-4 rounded-xl border border-border text-center shadow-sm">
+                    <p class="text-xs font-black text-primary uppercase tracking-widest mb-1">Documents</p>
+                    <h4 class="text-2xl font-bold" id="udDocs">0</h4>
+                </div>
+                <div class="bg-surface dark:bg-slate-800 p-4 rounded-xl border border-border text-center shadow-sm">
+                    <p class="text-xs font-black text-primary uppercase tracking-widest mb-1">Queries</p>
+                    <h4 class="text-2xl font-bold" id="udQueries">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="toast-container"></div>
+
+    <!-- Custom Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border border-border transform scale-95 transition-transform duration-200" id="deleteModalContent">
+            <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-3xl">warning</span>
+            </div>
+            <h3 class="text-xl font-bold text-center mb-2">Delete Global Document?</h3>
+            <p class="text-center text-text-muted mb-8">Are you sure you want to delete <span id="deleteFileName" class="font-bold text-text-main break-all"></span>? This action cannot be undone and it will be permanently removed from the Enterprise Brain.</p>
+            <div class="flex gap-4">
+                <button onclick="closeDeleteModal()" class="flex-1 px-6 py-3 rounded-xl font-bold border border-border hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">No, Cancel</button>
+                <button id="confirmDeleteBtn" class="flex-1 px-6 py-3 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                    Yes, Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userEmail = localStorage.getItem('email');
+        const token = localStorage.getItem('token');
+        if (!token || localStorage.getItem('role') !== 'admin') window.location.href = 'login.html';
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'check_circle' : (type === 'error' ? 'error' : 'info');
+            toast.innerHTML = `<span class="material-symbols-outlined">${icon}</span><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        document.getElementById('adminEmail').innerText = userEmail;
+        document.getElementById('adminInitial').innerText = localStorage.getItem('name') ? localStorage.getItem('name')[0].toUpperCase() : userEmail[0].toUpperCase();
+        
+        const pic = localStorage.getItem('profile_pic');
+        if (pic) {
+            const img = document.getElementById('adminProfilePic');
+            img.src = '/profiles/' + pic;
+            img.classList.remove('hidden');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tab + 'View').classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.querySelector(`.nav-item[onclick="switchTab('${tab}')"]`);
+            if (btn) {
+                btn.classList.add('active');
+            }
+
+            localStorage.setItem('activeAdminTab', tab);
+            
+            document.getElementById('pageTitle').innerText = tab === 'stats' ? 'Platform Statistics' : 
+                                                            tab === 'library' ? 'Enterprise Library' : 
+                                                            tab === 'users' ? 'User Management' : 'Enterprise Chat';
+            
+            const newChatBtn = document.getElementById('newChatBtn');
+            if (tab === 'chat') {
+                newChatBtn.classList.remove('hidden');
+                newChatBtn.classList.add('flex');
+            } else {
+                newChatBtn.classList.add('hidden');
+                newChatBtn.classList.remove('flex');
+            }
+            
+            if (tab === 'stats') loadStats();
+            if (tab === 'library') loadLibrary();
+            if (tab === 'users') loadUsers();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        const originalSwitchTab = switchTab;
+        switchTab = function(tab) {
+            originalSwitchTab(tab);
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                if (!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+            }
+        }
+
+        const userEmail = localStorage.getItem('email') || 'admin@enterprise.com';
+        document.getElementById('adminEmail').innerText = userEmail;
+        document.getElementById('adminInitial').innerText = userEmail[0].toUpperCase();
+
+        function formatToIST(dateStr) {
+            try {
+                const date = new Date(dateStr);
+                return new Intl.DateTimeFormat('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }).format(date);
+            } catch (e) { return dateStr; }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/admin/stats');
+                const data = await res.json();
+                
+                if (document.getElementById('statUsers')) document.getElementById('statUsers').innerText = data.total_users || 0;
+                if (document.getElementById('statGlobalDocs')) document.getElementById('statGlobalDocs').innerText = data.global_docs || 0;
+                if (document.getElementById('statPersonalDocs')) document.getElementById('statPersonalDocs').innerText = data.personal_docs || 0;
+                if (document.getElementById('statQueries')) document.getElementById('statQueries').innerText = data.total_queries || 0;
+                
+                const userTable = document.getElementById('userActivityTable');
+                const topUsers = data.top_users || [];
+                userTable.innerHTML = topUsers.map(u => `
+                    <tr>
+                        <td class="px-8 py-4">
+                            <div class="font-bold">${u.email.split('@')[0]}</div>
+                            <div class="text-[10px] text-text-muted">${u.email}</div>
+                        </td>
+                        <td class="px-8 py-4">
+                            <div class="w-full bg-gray-100 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-primary h-full" style="width: ${Math.min(u.queries * 5, 100)}%"></div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-4 font-mono font-bold text-primary">${u.queries}</td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error('Stats error:', err); }
+        }
+
+        async function loadLibrary() {
+            try {
+                const res = await fetch(`/documents/${encodeURIComponent(userEmail)}?t=${Date.now()}`);
+                const data = await res.json();
+                const libTable = document.getElementById('adminDocList');
+                if (!libTable) return;
+
+                const globalDocs = data.filter(d => d.scope === 'global');
+                libTable.innerHTML = globalDocs.map(d => `
+                    <tr class="border-b border-border hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-primary">description</span>
+                                <span class="font-medium">${d.filename}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${d.status === 'ready' ? 'bg-green-100 text-green-700' : (d.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700')}">${d.status}</span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-text-muted">${formatToIST(d.date)}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="deleteDocument('${d.filename}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error('Library error:', err); }
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        const savedTab = localStorage.getItem('activeAdminTab') || 'stats';
+        switchTab(savedTab);
+        loadStats();
+        restoreChatFromLocal();
+async function loadUsers() {
+            try {
+                const res = await fetch(`/admin/users?admin_email=${encodeURIComponent(userEmail)}`);
+                if (!res.ok) throw new Error('Unauthorized');
+                const users = await res.json();
+                const list = document.getElementById('allUsersList');
+                if (!list) return;
+
+                list.innerHTML = users.map(u => `
+                    <tr class="border-b border-border hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="font-bold">${u.name}</div>
+                            <div class="text-[10px] text-text-muted">${u.email}</div>
+                        </td>
+                        <td class="px-6 py-4 uppercase text-xs font-bold text-primary">${u.role}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${u.is_blocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${u.is_blocked ? 'Suspended' : 'Active'}</span>
+                        </td>
+                        <td class="px-6 py-4 flex justify-end gap-2">
+                            <button onclick="viewUserDetails('${u.email}')" class="text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors font-bold text-xs border border-primary/20">
+                                View
+                            </button>
+                            ${u.role !== 'admin' ? `
+                                <button onclick="toggleBlockUser('${u.email}', ${!u.is_blocked})" class="${u.is_blocked ? 'text-green-600 hover:bg-green-50' : 'text-red-500 hover:bg-red-50'} px-3 py-1 rounded-lg transition-colors font-bold text-xs border ${u.is_blocked ? 'border-green-200' : 'border-red-200'}">
+                                    ${u.is_blocked ? 'Unblock' : 'Suspend'}
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Users error:', err);
+            }
+        }
+
+        async function toggleBlockUser(email, block) {
+            try {
+                const res = await fetch(`/admin/users/${encodeURIComponent(email)}/block`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ admin_email: userEmail, is_blocked: block })
+                });
+                if (res.ok) {
+                    loadUsers();
+                    loadStats();
+                } else {
+                    alert('Failed to update user status');
+                }
+            } catch (err) {
+                console.error('Toggle error:', err);
+            }
+        }
+
+        let documentToDelete = null;
+
+        function deleteDocument(filename) {
+            documentToDelete = filename;
+            document.getElementById('deleteFileName').innerText = filename;
+            const modal = document.getElementById('deleteModal');
+            const content = document.getElementById('deleteModalContent');
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+            
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            confirmBtn.onclick = async () => {
+                const originalText = confirmBtn.innerHTML;
+                confirmBtn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Deleting...';
+                confirmBtn.disabled = true;
+                
+                try {
+                    const res = await fetch(`/documents/${encodeURIComponent(userEmail)}/${encodeURIComponent(documentToDelete)}?scope=global`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (res.ok) {
+                        showToast('Global document deleted successfully', 'success');
+                        loadLibrary();
+                        loadStats();
+                    } else {
+                        showToast('Failed to delete document', 'error');
+                    }
+                } catch (err) {
+                    console.error('Delete error:', err);
+                    showToast('An error occurred during deletion', 'error');
+                } finally {
+                    confirmBtn.innerHTML = originalText;
+                    confirmBtn.disabled = false;
+                    closeDeleteModal();
+                }
+            };
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            const content = document.getElementById('deleteModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                documentToDelete = null;
+            }, 200);
+        }
+
+        async function viewUserDetails(targetEmail) {
+            try {
+                const res = await fetch(`/admin/users/${encodeURIComponent(targetEmail)}/details?admin_email=${encodeURIComponent(userEmail)}`);
+                if (!res.ok) throw new Error('Failed to fetch details');
+                const data = await res.json();
+                
+                document.getElementById('udName').innerText = data.full_name || 'N/A';
+                document.getElementById('udEmail').innerText = data.email;
+                document.getElementById('udRole').innerText = data.role;
+                document.getElementById('udPhone').innerText = data.phone || 'N/A';
+                document.getElementById('udAddress').innerText = data.address || 'N/A';
+                document.getElementById('udDocs').innerText = data.doc_count;
+                document.getElementById('udQueries').innerText = data.query_count;
+                
+                const statusSpan = document.getElementById('udStatus');
+                statusSpan.innerText = data.is_blocked ? 'Suspended' : 'Active';
+                statusSpan.className = data.is_blocked ? 'font-bold uppercase text-xs px-2 py-1 rounded-full bg-red-100 text-red-700' : 'font-bold uppercase text-xs px-2 py-1 rounded-full bg-green-100 text-green-700';
+
+                const initSpan = document.getElementById('udInitials');
+                const img = document.getElementById('udProfilePic');
+                initSpan.innerText = data.full_name ? data.full_name[0].toUpperCase() : data.email[0].toUpperCase();
+                if (data.profile_pic) {
+                    img.src = '/profiles/' + data.profile_pic;
+                    img.classList.remove('hidden');
+                    initSpan.classList.add('hidden');
+                } else {
+                    img.classList.add('hidden');
+                    initSpan.classList.remove('hidden');
+                }
+
+                const modal = document.getElementById('userDetailsModal');
+                const content = document.getElementById('userDetailsContent');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function closeUserDetailsModal() {
+            const modal = document.getElementById('userDetailsModal');
+            const content = document.getElementById('userDetailsContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200);
+        }
+
+        async function handleUpload() {
+            const fileInput = document.getElementById('fileUpload');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const uploadBtn = document.querySelector('button[onclick*="fileUpload"]');
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            uploadBtn.disabled = true;
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `/upload?email=${encodeURIComponent(userEmail)}&scope=global`, true);
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 90); // 0 to 90%
+                    progressBar.style.width = percent + '%';
+                }
+            };
+
+            xhr.onload = function() {
+                progressBar.style.width = '100%'; // 100% when server returns
+                setTimeout(() => {
+                    uploadBtn.disabled = false;
+                    progressContainer.style.display = 'none';
+                    if (xhr.status === 200) {
+                        showToast('Document indexed and sync complete!', 'success');
+                        setTimeout(async () => {
+                            await loadLibrary();
+                            await loadStats();
+                        }, 300);
+                    } else {
+                        try {
+                            const resp = JSON.parse(xhr.responseText);
+                            showToast(resp.detail || 'Indexing failed.', 'error');
+                        } catch(e) {
+                            showToast('Indexing failed.', 'error');
+                        }
+                    }
+                }, 800);
+                fileInput.value = '';
+            };
+
+            xhr.onerror = function() {
+                uploadBtn.disabled = false;
+                progressContainer.style.display = 'none';
+                showToast('Network error.', 'error');
+            };
+
+            xhr.upload.onload = () => {
+                progressBar.style.width = '95%'; // Stay at 95% while vectorizing
+            };
+
+            xhr.send(formData);
+        }
+
+        async function sendChat() {
+            const input = document.getElementById('chatInput');
+            const q = input.value.trim();
+            if (!q) return;
+            input.value = '';
+            
+            appendMessage('user', q);
+            const loadingId = appendMessage('ai', 'Thinking...');
+
+            try {
+                const res = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, question: q, scope: 'global' })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    updateMessage(loadingId, data.answer);
+                } else {
+                    updateMessage(loadingId, data.detail || 'An error occurred.');
+                }
+            } catch (err) {
+                updateMessage(loadingId, 'Connection lost. Is the AI server online?');
+            }
+        }
+
+        function appendMessage(role, text) {
+            const id = 'msg-' + Date.now();
+            const container = document.getElementById('chatMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = role === 'user' ? 'flex justify-end' : 'flex items-start gap-4';
+            msgDiv.innerHTML = role === 'user' 
+                ? `<div class="max-w-[80%] bg-primary text-white p-4 rounded-2xl rounded-tr-none shadow-lg">${text}</div>`
+                : `<div class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-lg">
+                    <span class="material-symbols-outlined text-sm">smart_toy</span>
+                   </div>
+                   <div class="flex-1 max-w-[85%] bg-white dark:bg-slate-800 p-5 rounded-2xl rounded-tl-none border border-border shadow-sm prose dark:prose-invert prose-sm sm:prose-base max-w-none" id="${id}">${text === 'Thinking...' ? text : marked.parse(text)}</div>`;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            saveChatToLocal();
+            return id;
+        }
+
+        function updateMessage(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = marked.parse(text);
+            const container = document.getElementById('chatMessages');
+            container.scrollTop = container.scrollHeight;
+            saveChatToLocal();
+        }
+
+        function saveChatToLocal() {
+            const container = document.getElementById('chatMessages');
+            localStorage.setItem('adminChatHTML', container.innerHTML);
+        }
+
+        function restoreChatFromLocal() {
+            const saved = localStorage.getItem('adminChatHTML');
+            if (saved) {
+                document.getElementById('chatMessages').innerHTML = saved;
+                const container = document.getElementById('chatMessages');
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function startNewChat() {
+            localStorage.removeItem('adminChatHTML');
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 opacity-50">
+                    <span class="material-symbols-outlined text-6xl mb-4">bolt</span>
+                    <h2 class="text-2xl font-bold">Admin Assistant Ready</h2>
+                    <p>You have full access to all documents.</p>
+                </div>
+            `;
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        }
+
+        // Dark mode already initialized in <head>
+        
+        const savedTab = localStorage.getItem('activeAdminTab') || 'stats';
+        switchTab(savedTab);
+        
+        loadStats();
+        restoreChatFromLocal();
+    </script>
+</body>
+</html>
