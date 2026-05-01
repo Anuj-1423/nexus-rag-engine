@@ -76,7 +76,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
     def __init__(self):
         api_key = os.getenv("GOOGLE_API_KEY")
         self.client = genai.Client(api_key=api_key)
-        self.model = "text-embedding-004"
+        self.model = "models/gemini-embedding-2"
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Embed a list of documents."""

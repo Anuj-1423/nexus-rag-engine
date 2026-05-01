@@ -58,37 +58,44 @@ def chunk_document(doc_structure: DocumentStructure, embeddings=None) -> List[Do
             length_function=len,
         )
 
+    # Fallback splitter in case Semantic fails
+    fallback_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP,
+        separators=SEPARATORS
+    )
+
     all_chunks: List[Document] = []
     
+    def process_content(text, metadata):
+        if not text.strip():
+            return []
+        
+        try:
+            # Try semantic first
+            return splitter.create_documents([text], metadatas=[metadata])
+        except Exception as e:
+            logger.warning(f"Semantic chunking failed ({e}), falling back to recursive.")
+            return fallback_splitter.create_documents([text], metadatas=[metadata])
+
     # If we have sections, process each section separately to maintain boundaries
     if doc_structure.sections:
         for section in doc_structure.sections:
-            if not section.content.strip():
-                continue
-
             metadata = {
                 "filename": doc_structure.filename,
                 "doc_title": doc_structure.title,
                 "section_heading": section.heading,
                 "page_number": section.page_number
             }
-            
-            # SemanticChunker.create_documents handles the splitting
-            sub_chunks = splitter.create_documents(
-                [section.content],
-                metadatas=[metadata],
-            )
-            all_chunks.extend(sub_chunks)
+            all_chunks.extend(process_content(section.content, metadata))
     else:
         # Fallback to raw text
-        all_chunks = splitter.create_documents(
-            [doc_structure.raw_text],
-            metadatas=[{
-                "filename": doc_structure.filename,
-                "doc_title": doc_structure.title,
-                "page_number": 1
-            }],
-        )
+        metadata = {
+            "filename": doc_structure.filename,
+            "doc_title": doc_structure.title,
+            "page_number": 1
+        }
+        all_chunks.extend(process_content(doc_structure.raw_text, metadata))
 
     return all_chunks
 
