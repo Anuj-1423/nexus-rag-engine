@@ -28,23 +28,9 @@ _reranker_model = None
 # ---------------------------------------------------------------------------
 
 def _load_reranker():
-    """Lazy-load the cross-encoder model on first use."""
-    global _reranker_model
-    if _reranker_model is not None:
-        return _reranker_model
-
-    try:
-        from sentence_transformers import CrossEncoder
-        logger.info(f"Loading re-ranker model: {RERANKER_MODEL_NAME}")
-        _reranker_model = CrossEncoder(RERANKER_MODEL_NAME)
-        logger.info("Re-ranker model loaded successfully.")
-        return _reranker_model
-    except Exception as e:
-        logger.warning(
-            f"Failed to load re-ranker model: {e}. "
-            "Falling back to original retrieval order."
-        )
-        return None
+    """Disabled for low-RAM environments (Render Free Tier)."""
+    # Cross-encoders are memory-intensive. Disabling to stay under 512MB.
+    return None
 
 
 # ---------------------------------------------------------------------------
