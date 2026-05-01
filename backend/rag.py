@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 # LLM: Gemini Flash (via Google API)
-LLM_MODEL = "gemini-flash-latest"
+LLM_MODEL = "gemini-1.5-flash"
 
 # Retrieval settings
 RETRIEVAL_K = 20
@@ -131,9 +131,10 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
     if not chunks:
         raise ValueError(f"No content extracted from '{filename}'.")
 
-    # Explicitly add filename to metadata for reliable deletion later
+    # Explicitly add metadata for reliable retrieval and deletion
     for chunk in chunks:
         chunk.metadata["filename"] = filename
+        chunk.metadata["scope"] = scope
 
     stats = get_chunking_stats(chunks)
     total_sections = len(doc_structure.sections) if doc_structure.sections else 0
@@ -240,39 +241,58 @@ async def hybrid_search(query: str, db: Chroma, index_path: str, k: int = 10) ->
                 
     return final_docs
 
-async def retrieve_context(query: str, scope: str = "global", user_email: Optional[str] = None, filters: dict = None) -> list:
-    """Enhanced retrieval with Hybrid Search and Merged Scope support."""
+async def retrieve_context(query: str, mode: str = "combined", user_email: Optional[str] = None, filters: dict = None) -> list:
+    """Enhanced retrieval with explicit support for Enterprise, Personal, and Combined modes."""
     
     indices_to_search = []
     
-    # Always search global if it exists
-    global_path = get_index_path("global")
-    if os.path.exists(global_path):
-        indices_to_search.append((global_path, "global"))
-        
-    # Search personal if requested and exists
-    if scope == "personal" and user_email:
-        personal_path = get_index_path("personal", user_email)
-        if os.path.exists(personal_path):
-            indices_to_search.append((personal_path, "personal"))
+    # 1. ENTERPRISE Mode: Only Global Admin Documents
+    if mode == "enterprise":
+        global_path = get_index_path("global")
+        if os.path.exists(global_path):
+            indices_to_search.append((global_path, "global"))
+
+    # 2. PERSONAL Mode: Only User's Private Documents
+    elif mode == "personal":
+        if user_email:
+            personal_path = get_index_path("personal", user_email)
+            if os.path.exists(personal_path):
+                indices_to_search.append((personal_path, "personal"))
+
+    # 3. COMBINED Mode: Both Global and Personal (Default)
+    else: # combined
+        global_path = get_index_path("global")
+        if os.path.exists(global_path):
+            indices_to_search.append((global_path, "global"))
+            
+        if user_email:
+            personal_path = get_index_path("personal", user_email)
+            if os.path.exists(personal_path):
+                indices_to_search.append((personal_path, "personal"))
 
     if not indices_to_search:
         return []
 
     emb = await asyncio.to_thread(get_embeddings)
-    all_candidates = []
     
-    for index_path, _ in indices_to_search:
+    async def search_index(path, scope):
         try:
-            db = Chroma(persist_directory=index_path, embedding_function=emb)
-            candidates = await hybrid_search(query, db, index_path, k=RETRIEVAL_K)
+            db = await asyncio.to_thread(Chroma, persist_directory=path, embedding_function=emb)
+            candidates = await hybrid_search(query, db, path, k=RETRIEVAL_K)
             
             if filters:
                 candidates = [d for d in candidates if all(d.metadata.get(k) == v for k, v in filters.items())]
-            
-            all_candidates.extend(candidates)
+            return candidates
         except Exception as e:
-            logger.warning(f"Search failed for {index_path}: {e}")
+            logger.warning(f"Search failed for {path}: {e}")
+            return []
+
+    # Search all relevant indices in parallel
+    results = await asyncio.gather(*[search_index(path, scope) for path, scope in indices_to_search])
+    
+    all_candidates = []
+    for candidates in results:
+        all_candidates.extend(candidates)
 
     if not all_candidates:
         return []
@@ -289,12 +309,12 @@ async def retrieve_context(query: str, scope: str = "global", user_email: Option
     return await asyncio.to_thread(rerank, query, unique_candidates, top_n=RERANK_TOP_N)
 
 
-async def generate_rag_response(query: str, scope: str = "global", user_email: Optional[str] = None, chat_history: List[dict] = None) -> dict:
+async def generate_rag_response(query: str, mode: str = "combined", user_email: Optional[str] = None, chat_history: List[dict] = None) -> dict:
     """Enhanced RAG Response with Context-Awareness and Strict Source Control."""
     
     # Enhancement #8: Query Cache (History-Aware)
     history_hash = hashlib.md5(str(chat_history).encode()).hexdigest() if chat_history else "no_history"
-    cache_key = f"{scope}:{user_email}:{query}:{history_hash}"
+    cache_key = f"{mode}:{user_email}:{query}:{history_hash}"
     
     if cache_key in _query_cache:
         logger.info("Serving from history-aware cache.")
@@ -310,7 +330,7 @@ async def generate_rag_response(query: str, scope: str = "global", user_email: O
     client = genai.Client(api_key=api_key)
 
     # Step 1: Retrieve (Now Async)
-    ranked_results = await retrieve_context(query, scope, user_email)
+    ranked_results = await retrieve_context(query, mode, user_email)
     if not ranked_results:
         return {"answer": "No relevant info found in the knowledge base.", "sources": []}
 
@@ -325,7 +345,11 @@ async def generate_rag_response(query: str, scope: str = "global", user_email: O
         context_str += f"\n--- SOURCE: {source_label} ---\n{doc.page_content}\n"
         
         if source_label not in seen_sources:
-            sources.append({"filename": meta.get("filename"), "page": meta.get("page_number")})
+            sources.append({
+                "filename": meta.get("filename"),
+                "page": meta.get("page_number", 1),
+                "scope": meta.get("scope", "unknown")
+            })
             seen_sources.add(source_label)
 
     # Simple Compression
@@ -389,7 +413,7 @@ async def generate_rag_response(query: str, scope: str = "global", user_email: O
         return result
         
     except Exception as e:
-        logger.error(f"OpenRouter error: {e}")
+        logger.error(f"Google GenAI generation failed: {e}")
         return {"answer": f"Error generating answer: {e}", "sources": []}
 
 def ingest_text(text: str, meta: dict):

@@ -214,7 +214,7 @@ async def upload_document(email: str, scope: str = "global", file: UploadFile = 
 class AskRequest(BaseModel):
     email: str
     question: str
-    scope: str = "global"
+    mode: str = "combined"
 
 @app.post('/ask')
 async def ask_question(data: AskRequest):
@@ -236,12 +236,12 @@ async def ask_question(data: AskRequest):
         history_rows = cursor.fetchall()
         chat_history = [{"question": r[0], "answer": r[1]} for r in history_rows]
 
-        res = await generate_rag_response(data.question, scope=data.scope, user_email=data.email, chat_history=chat_history)
+        res = await generate_rag_response(data.question, mode=data.mode, user_email=data.email, chat_history=chat_history)
         
         await asyncio.to_thread(
             cursor.execute,
             "INSERT INTO chats (email, question, answer, scope) VALUES (%s, %s, %s, %s)",
-            (data.email, data.question, res['answer'], data.scope)
+            (data.email, data.question, res['answer'], data.mode)
         )
         await asyncio.to_thread(conn.commit)
         return res
