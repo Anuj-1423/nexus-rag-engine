@@ -4,7 +4,7 @@ from typing import Optional, List
 import hashlib
 
 from google import genai
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 
 from document_parser import extract_document_structure, SUPPORTED_EXTENSIONS
@@ -72,12 +72,12 @@ def get_index_path(scope: str = "global", user_email: Optional[str] = None) -> s
 _hf_embeddings = None
 
 def get_embeddings():
-    """Get Local HuggingFace Embeddings (100% Free, No Key Needed)."""
+    """Get Google Generative AI Embeddings (API-based, Saves RAM)."""
     global _hf_embeddings
     if _hf_embeddings is None:
-        logger.info("Loading Local HuggingFace Embeddings (this may take a moment on first run)...")
-        # Uses 'all-MiniLM-L6-v2' which is fast and accurate for RAG
-        _hf_embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        logger.info("Initializing Google Generative AI Embeddings...")
+        # Uses 'text-embedding-004' which is lightweight (on your server) and high quality
+        _hf_embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
     return _hf_embeddings
 
 # ---------------------------------------------------------------------------
