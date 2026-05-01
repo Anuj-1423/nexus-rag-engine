@@ -21,7 +21,8 @@ def get_db_connection(database=None):
             'user': DB_USER,
             'password': DB_PASSWORD,
             'port': DB_PORT,
-            'autocommit': True
+            'autocommit': True,
+            'ssl_disabled': False  # Enable SSL for cloud DBs like Aiven
         }
         if database:
             config['database'] = database
