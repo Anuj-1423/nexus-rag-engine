@@ -4,7 +4,7 @@ from typing import Optional, List
 import hashlib
 
 from google import genai
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_core.embeddings import Embeddings
 from langchain_chroma import Chroma
 
 from document_parser import extract_document_structure, SUPPORTED_EXTENSIONS
@@ -71,13 +71,43 @@ def get_index_path(scope: str = "global", user_email: Optional[str] = None) -> s
 # Global cache for embeddings to avoid reloading
 _hf_embeddings = None
 
+class GoogleAIEmbeddingsOfficial(Embeddings):
+    """Custom wrapper for Google AI Embeddings using the official SDK."""
+    def __init__(self):
+        api_key = os.getenv("GOOGLE_API_KEY")
+        self.client = genai.Client(api_key=api_key)
+        self.model = "text-embedding-004"
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """Embed a list of documents."""
+        try:
+            response = self.client.models.embed_content(
+                model=self.model,
+                contents=texts
+            )
+            return [item.values for item in response.embeddings]
+        except Exception as e:
+            logger.error(f"Batch embedding failed: {e}")
+            raise
+
+    def embed_query(self, text: str) -> List[float]:
+        """Embed a single query."""
+        try:
+            response = self.client.models.embed_content(
+                model=self.model,
+                contents=text
+            )
+            return response.embeddings[0].values
+        except Exception as e:
+            logger.error(f"Single embedding failed: {e}")
+            raise
+
 def get_embeddings():
-    """Get Google Generative AI Embeddings (API-based, Saves RAM)."""
+    """Get the official Google AI Embeddings wrapper."""
     global _hf_embeddings
     if _hf_embeddings is None:
-        logger.info("Initializing Google Generative AI Embeddings...")
-        # Uses 'embedding-001' which is the most stable and widely supported model
-        _hf_embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+        logger.info("Initializing Official Google AI Embeddings SDK...")
+        _hf_embeddings = GoogleAIEmbeddingsOfficial()
     return _hf_embeddings
 
 # ---------------------------------------------------------------------------
