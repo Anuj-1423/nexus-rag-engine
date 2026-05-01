@@ -14,22 +14,32 @@ DB_NAME = os.getenv('DB_NAME', 'enterprise_rag')
 DB_PORT = int(os.getenv('DB_PORT', 3306))
 
 def get_db_connection(database=None):
-    """Creates a fresh connection to the MySQL server."""
-    try:
-        config = {
-            'host': DB_HOST,
-            'user': DB_USER,
-            'password': DB_PASSWORD,
-            'port': DB_PORT,
-            'autocommit': True,
-            'ssl_disabled': False  # Enable SSL for cloud DBs like Aiven
-        }
-        if database:
-            config['database'] = database
-        return mysql.connector.connect(**config)
-    except mysql.connector.Error as err:
-        logger.error(f"Database connection error: {err}")
-        raise
+    """Creates a fresh connection to the MySQL server with retries."""
+    import time
+    max_retries = 3
+    retry_delay = 2
+    
+    last_err = None
+    for i in range(max_retries):
+        try:
+            config = {
+                'host': DB_HOST,
+                'user': DB_USER,
+                'password': DB_PASSWORD,
+                'port': DB_PORT,
+                'autocommit': True,
+                'ssl_disabled': False
+            }
+            if database:
+                config['database'] = database
+            return mysql.connector.connect(**config)
+        except mysql.connector.Error as err:
+            last_err = err
+            logger.warning(f"Database connection attempt {i+1} failed. Retrying in {retry_delay}s...")
+            time.sleep(retry_delay)
+    
+    logger.error(f"Database connection failed after {max_retries} attempts: {last_err}")
+    raise last_err
 
 def init_db():
     """Initializes the database and tables if they don't exist."""
