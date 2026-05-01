@@ -28,7 +28,8 @@ def get_db_connection(database=None):
                 'password': DB_PASSWORD,
                 'port': DB_PORT,
                 'autocommit': True,
-                'ssl_disabled': False
+                'ssl_disabled': False,
+                'ssl_ca': None # Setting this to None while ssl_disabled=False forces SSL in mysql-connector
             }
             if database:
                 config['database'] = database
