@@ -6,12 +6,12 @@ bcrypt
 pyjwt
 langchain
 langchain-community
-langchain-text-splitters
-langchain-google-genai
-langchain-experimental
-faiss-cpu
+langchain-huggingface
+langchain-chroma
 pypdf
 python-docx
 google-generativeai
 sentence-transformers
+rank_bm25
+python-dotenv
 gunicorn
