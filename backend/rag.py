@@ -241,29 +241,53 @@ async def hybrid_search(query: str, db: Chroma, index_path: str, k: int = 10) ->
     return final_docs
 
 async def retrieve_context(query: str, scope: str = "global", user_email: Optional[str] = None, filters: dict = None) -> list:
-    """Enhanced retrieval with Hybrid Search and Metadata Filtering."""
-    index_path = get_index_path(scope, user_email)
-    if not os.path.exists(index_path):
+    """Enhanced retrieval with Hybrid Search and Merged Scope support."""
+    
+    indices_to_search = []
+    
+    # Always search global if it exists
+    global_path = get_index_path("global")
+    if os.path.exists(global_path):
+        indices_to_search.append((global_path, "global"))
+        
+    # Search personal if requested and exists
+    if scope == "personal" and user_email:
+        personal_path = get_index_path("personal", user_email)
+        if os.path.exists(personal_path):
+            indices_to_search.append((personal_path, "personal"))
+
+    if not indices_to_search:
         return []
 
     emb = await asyncio.to_thread(get_embeddings)
-    db = Chroma(persist_directory=index_path, embedding_function=emb)
+    all_candidates = []
     
-    # Enhancement #5: Metadata Filtering
-    try:
-        # Use hybrid search (now async)
-        candidates = await hybrid_search(query, db, index_path, k=RETRIEVAL_K)
-        
-        # Apply manual filtering if Chroma filter is too complex
-        if filters:
-            candidates = [d for d in candidates if all(d.metadata.get(k) == v for k, v in filters.items())]
+    for index_path, _ in indices_to_search:
+        try:
+            db = Chroma(persist_directory=index_path, embedding_function=emb)
+            candidates = await hybrid_search(query, db, index_path, k=RETRIEVAL_K)
             
-    except Exception as e:
-        logger.warning(f"Hybrid search failed ({e}), falling back to standard search")
-        candidates = await asyncio.to_thread(db.similarity_search, query, k=RETRIEVAL_K, filter=filters)
+            if filters:
+                candidates = [d for d in candidates if all(d.metadata.get(k) == v for k, v in filters.items())]
+            
+            all_candidates.extend(candidates)
+        except Exception as e:
+            logger.warning(f"Search failed for {index_path}: {e}")
+
+    if not all_candidates:
+        return []
     
-    # Enhancement #6: Reranker (already integrated, making it async-aware)
-    return await asyncio.to_thread(rerank, query, candidates, top_n=RERANK_TOP_N)
+    # Remove duplicates
+    unique_candidates = []
+    seen = set()
+    for d in all_candidates:
+        if d.page_content not in seen:
+            unique_candidates.append(d)
+            seen.add(d.page_content)
+    
+    # Final step: Rerank
+    return await asyncio.to_thread(rerank, query, unique_candidates, top_n=RERANK_TOP_N)
+
 
 async def generate_rag_response(query: str, scope: str = "global", user_email: Optional[str] = None, chat_history: List[dict] = None) -> dict:
     """Enhanced RAG Response with Context-Awareness and Strict Source Control."""
