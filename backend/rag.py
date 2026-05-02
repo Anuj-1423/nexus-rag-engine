@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 # Configuration: OpenRouter (Free) + Local Embeddings
 # ---------------------------------------------------------------------------
 
-# LLM: Gemini Flash (via Google API)
-LLM_MODEL = "gemini-1.5-flash"
+# LLM: Gemini 2.5 Flash (Current stable)
+LLM_MODEL = "gemini-2.5-flash"
 
 # Retrieval settings
 RETRIEVAL_K = 20
@@ -77,26 +77,94 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         api_key = os.getenv("GOOGLE_API_KEY")
         self.client = genai.Client(api_key=api_key)
         self.model = "models/gemini-embedding-2"
+        self._llm_model = None
+
+    def get_llm_model(self):
+        """Dynamically find an available Flash model if the default fails."""
+        if self._llm_model:
+            return self._llm_model
+            
+        default_model = "gemini-1.5-flash"
+        try:
+            # Try to verify the default model exists
+            self.client.models.get(model=default_model)
+            self._llm_model = default_model
+            return self._llm_model
+        except Exception:
+            try:
+                # List available models and find a Flash model
+                models = self.client.models.list()
+                for m in models:
+                    # The correct attribute in google-genai is 'supported_actions'
+                    if m.supported_actions and "generateContent" in m.supported_actions and "flash" in m.name.lower():
+                        logger.info(f"Dynamically selected model: {m.name}")
+                        # Store name without 'models/' prefix if present
+                        self._llm_model = m.name.replace("models/", "")
+                        return self._llm_model
+            except Exception as e:
+                logger.error(f"Failed to list models: {e}")
+        
+        return default_model # Fallback
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        """Embed a list of documents."""
+        """Embed a list of documents with batching to avoid API limits."""
+        if not texts:
+            return []
+
+        # Google Gemini Embedding limit is 100 contents per batch
+        batch_size = 100
+        all_embeddings = []
+
         try:
-            response = self.client.models.embed_content(
-                model=self.model,
-                contents=texts
-            )
-            return [item.values for item in response.embeddings]
+            for i in range(0, len(texts), batch_size):
+                batch = texts[i : i + batch_size]
+                # Filter out empty strings which can cause API errors
+                batch = [t if t.strip() else "[empty]" for t in batch]
+                
+                # Wrap each string in a Content object to get individual embeddings
+                # Otherwise, the SDK wraps the list into a single Content with multiple Parts
+                contents = [
+                    genai.types.Content(parts=[genai.types.Part.from_text(text=t)])
+                    for t in batch
+                ]
+
+                response = self.client.models.embed_content(
+                    model=self.model,
+                    contents=contents
+                )
+                
+                if not response or not hasattr(response, 'embeddings') or not response.embeddings:
+                    logger.error(f"API returned empty embeddings for batch {i//batch_size}")
+                    raise ValueError("API returned no embeddings.")
+
+                batch_embeddings = [item.values for item in response.embeddings]
+                
+                # Check if we got the expected number of embeddings
+                if len(batch_embeddings) != len(batch):
+                    logger.error(f"Expected {len(batch)} embeddings, got {len(batch_embeddings)}")
+                    raise ValueError(f"Batch size mismatch: expected {len(batch)}, got {len(batch_embeddings)}")
+
+                all_embeddings.extend(batch_embeddings)
+
+            return all_embeddings
         except Exception as e:
-            logger.error(f"Batch embedding failed: {e}")
+            logger.error(f"Embedding failed: {e}")
             raise
 
     def embed_query(self, text: str) -> List[float]:
         """Embed a single query."""
+        if not text or not text.strip():
+            return [0.0] * 768
+
         try:
+            # Single string is automatically wrapped by the SDK
             response = self.client.models.embed_content(
                 model=self.model,
                 contents=text
             )
+            if not response or not response.embeddings:
+                 raise ValueError("API returned no embeddings for query.")
+                 
             return response.embeddings[0].values
         except Exception as e:
             logger.error(f"Single embedding failed: {e}")
@@ -388,33 +456,46 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
 
     system_prompt += "\n\nContext Documents (Use ONLY relevant parts):\n" + context_str
 
-    try:
-        # Use asyncio.to_thread for the blocking Google GenAI call (if no async version used)
-        # Actually, genai.Client is sync, so we use to_thread
-        response = await asyncio.to_thread(
-            client.models.generate_content,
-            model=LLM_MODEL,
-            config={"system_instruction": system_prompt},
-            contents=f"Question: {query}"
-        )
-        answer = response.text
-        
-        result = {
-            "answer": answer,
-            "sources": sources if asks_for_sources else [],
-            "model": LLM_MODEL,
-            "cached": False
-        }
-        
-        # Save to cache
-        _query_cache[cache_key] = result
-        await asyncio.to_thread(save_cache)
-        
-        return result
-        
-    except Exception as e:
-        logger.error(f"Google GenAI generation failed: {e}")
-        return {"answer": f"Error generating answer: {e}", "sources": []}
+    # LLM_MODEL changed to "gemini-1.5-flash-latest" at top of file
+    
+    max_retries = 3
+    # Use dynamic model discovery
+    active_model = get_embeddings().get_llm_model()
+    
+    for attempt in range(max_retries):
+        try:
+            # Use asyncio.to_thread for the blocking Google GenAI call
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=active_model,
+                config={"system_instruction": system_prompt},
+                contents=f"Question: {query}"
+            )
+            answer = response.text
+            
+            result = {
+                "answer": answer,
+                "sources": sources if asks_for_sources else [],
+                "model": active_model,
+                "cached": False
+            }
+            
+            # Save to cache
+            _query_cache[cache_key] = result
+            await asyncio.to_thread(save_cache)
+            
+            return result
+            
+        except Exception as e:
+            err_msg = str(e)
+            if "429" in err_msg and attempt < max_retries - 1:
+                wait_time = (attempt + 1) * 5 # Exponential-ish backoff
+                logger.warning(f"Rate limited (429) on {active_model}. Retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
+                await asyncio.sleep(wait_time)
+                continue
+                
+            logger.error(f"Google GenAI generation failed (Attempt {attempt+1}): {e}")
+            return {"answer": f"Error generating answer: {e}", "sources": []}
 
 def ingest_text(text: str, meta: dict):
     return ingest_document(text.encode(), meta.get("filename", "text.txt"))

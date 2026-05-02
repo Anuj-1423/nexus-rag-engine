@@ -72,11 +72,23 @@ def chunk_document(doc_structure: DocumentStructure, embeddings=None) -> List[Do
             return []
         
         try:
+            # Heuristic: Semantic chunking needs at least a few sentences to be meaningful
+            # and to avoid "IndexError: list index out of range" during percentile calculation.
+            sentences = text.split(". ")
+            if len(sentences) < 3:
+                logger.info("Text too short for semantic chunking, using recursive.")
+                return fallback_splitter.create_documents([text], metadatas=[metadata])
+
             # Try semantic first
             return splitter.create_documents([text], metadatas=[metadata])
         except Exception as e:
-            logger.warning(f"Semantic chunking failed ({e}), falling back to recursive.")
-            return fallback_splitter.create_documents([text], metadatas=[metadata])
+            logger.warning(f"Semantic chunking failed ({type(e).__name__}: {e}), falling back to recursive.")
+            try:
+                return fallback_splitter.create_documents([text], metadatas=[metadata])
+            except Exception as fe:
+                logger.error(f"Fallback chunking ALSO failed: {fe}")
+                # Final survival: return as one big chunk if all else fails
+                return [Document(page_content=text, metadata=metadata)]
 
     # If we have sections, process each section separately to maintain boundaries
     if doc_structure.sections:
