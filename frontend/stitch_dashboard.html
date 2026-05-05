@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Enterprise Knowledge Assistant - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#e7eefe",
+                    "surface-tint": "#4d44e3",
+                    "on-surface-variant": "#464555",
+                    "tertiary": "#7e3000",
+                    "outline-variant": "#c7c4d8",
+                    "on-error": "#ffffff",
+                    "surface-bright": "#f9f9ff",
+                    "surface-dim": "#d3daea",
+                    "on-primary-fixed-variant": "#3323cc",
+                    "surface-container-high": "#e2e8f8",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "outline": "#777587",
+                    "error": "#ba1a1a",
+                    "on-background": "#151c27",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-low": "#f0f3ff",
+                    "surface": "#f9f9ff",
+                    "inverse-primary": "#c3c0ff",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed": "#d8e3fb",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "background": "#f9f9ff",
+                    "on-surface": "#151c27",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed": "#ffdbcc",
+                    "tertiary-container": "#a44100",
+                    "primary-fixed": "#e2dfff",
+                    "tertiary-fixed-dim": "#ffb695",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#7b2f00",
+                    "on-secondary-container": "#586377",
+                    "primary-container": "#4f46e5",
+                    "on-tertiary-fixed": "#351000",
+                    "secondary": "#545f73",
+                    "inverse-surface": "#2a313d",
+                    "secondary-container": "#d5e0f8",
+                    "primary": "#3525cd",
+                    "on-primary-fixed": "#0f0069",
+                    "primary-fixed-dim": "#c3c0ff",
+                    "on-primary-container": "#dad7ff",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#dce2f3",
+                    "surface-container-highest": "#dce2f3",
+                    "inverse-on-surface": "#ebf1ff",
+                    "on-tertiary-container": "#ffd2be",
+                    "on-secondary-fixed": "#111c2d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "lg": "24px",
+                    "3xl": "64px",
+                    "2xl": "48px",
+                    "margin": "32px",
+                    "gutter": "24px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "xl": "32px",
+                    "md": "16px",
+                    "sidebar_width": "280px",
+                    "sidebar_collapsed": "64px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "h1": ["Inter"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "h3": ["Inter"],
+                    "display-xl": ["Inter"],
+                    "body-md": ["Inter"],
+                    "h2": ["Inter"],
+                    "caption": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "h1": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "display-lg": ["30px", {"lineHeight": "38px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "h3": ["18px", {"lineHeight": "26px", "fontWeight": "600"}],
+                    "display-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "h2": ["20px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "16px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
+<!-- NavigationDrawer (Shared Component) -->
+<aside class="hidden lg:flex flex-col h-full py-6 w-[280px] h-screen border-r border-slate-200 fixed left-0 top-0 bg-white shadow-sm z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<span class="text-xl font-bold text-indigo-600">Knowledge Assistant</span>
+</div>
+<div class="flex-1 space-y-1">
+<a class="bg-indigo-50 text-indigo-700 border-l-[3px] border-indigo-600 flex items-center px-6 py-3 transition-all font-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="text-slate-600 flex items-center px-6 py-3 hover:bg-slate-50 transition-colors duration-200 font-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="chat_bubble">chat_bubble</span>
+                Assistant
+            </a>
+<a class="text-slate-600 flex items-center px-6 py-3 hover:bg-slate-50 transition-colors duration-200 font-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="history">history</span>
+                History
+            </a>
+<a class="text-slate-600 flex items-center px-6 py-3 hover:bg-slate-50 transition-colors duration-200 font-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="description">description</span>
+                Library
+            </a>
+<a class="text-slate-600 flex items-center px-6 py-3 hover:bg-slate-50 transition-colors duration-200 font-label-md" href="#">
+<span class="material-symbols-outlined mr-3" data-icon="settings">settings</span>
+                Settings
+            </a>
+</div>
+<div class="px-6 py-4 mt-auto border-t border-slate-100">
+<div class="flex items-center gap-3">
+<img alt="Alex Sterling" class="w-10 h-10 rounded-full border-2 border-primary/20" data-alt="Close-up professional headshot of a friendly smiling man with short dark hair in a corporate setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwwBMUA4edqqJuS_PMNin-Nv7Xzkz0HlckxhJn9BWHU3M5q5fgI63rK5eiSEnUbMfAPpNvm0JKV02eEe5iTLhjE_fwuXREy36cgknVWNFKVvAPWAdfn-lycZAzXL631HWw1-A3vji25Txh6FwF14Jf4Suc1UoYIAxU74mx2PHkn-INQD-ophu_nC-krTnqmTgq2dl4Zz2X7yiO2z-97IHzmbqazV58AKfw6hnPUw8K44hEvZ5vYtIlh2Kn5E4AwVqnxEcfl4FveNuh"/>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900">Alex Sterling</span>
+<span class="text-xs text-slate-500">Enterprise Admin</span>
+</div>
+</div>
+<div class="mt-4 text-[10px] text-slate-400 font-medium">v2.4.0</div>
+</div>
+</aside>
+<!-- TopAppBar (Shared Component for Mobile/Context) -->
+<header class="flex items-center justify-between px-6 w-full lg:ml-[280px] lg:w-[calc(100%-280px)] h-16 border-b border-slate-200 sticky top-0 z-30 bg-white/80 backdrop-blur-xl">
+<div class="flex items-center gap-4">
+<button class="lg:hidden p-2 hover:bg-slate-100 rounded-lg">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-h1 text-slate-900">Dashboard</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden cursor-pointer active:opacity-70">
+<img alt="Profile Picture" class="w-full h-full object-cover" data-alt="Professional portrait of a male employee for internal system avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxnqjN6rR8oHu6djSvRQ78D_y2IHLZAzMIyzUJytStCQK1SGBXArzNyXMm0uJInrRGASrJSXz3gZLyc6pkEdqsOueMJrRNXyEjTag6rUOaYqmTLTRMD1BZGpb-QweLkmrWR2bXRFlBPm6AddwKCIsKBIJrtaCW2h6r6-2FK9T85t28hKtcrUyqRFUKZszlNTT6yaVKsbr1M_ItdpLBHT7Q25URdTj1-IJi5bPY9jd7yd6EHhmAxPCyAhd3hOF0zYG3_6y4SbdCh1rq"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="lg:ml-[280px] p-6 lg:p-10 space-y-8 max-w-[1400px]">
+<!-- Welcome Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<p class="text-primary font-label-md mb-1">Good Morning</p>
+<h2 class="text-display-lg font-display-lg text-on-surface">Welcome back, Anuj 👋</h2>
+<p class="text-on-surface-variant font-body-md">Today is Tuesday, 24 October 2023</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 border border-outline-variant rounded-lg bg-white font-label-md hover:bg-slate-50 transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="cloud_download">cloud_download</span>
+                    Export Report
+                </button>
+</div>
+</header>
+<!-- Stat Cards Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+<div>
+<p class="text-slate-500 font-label-md mb-2">Total Questions</p>
+<h3 class="text-display-lg font-display-lg">1,284</h3>
+<div class="mt-2 flex items-center text-emerald-600 font-label-sm">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_up">trending_up</span>
+                        +12% vs last month
+                    </div>
+</div>
+<div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="help_center">help_center</span>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+<div>
+<p class="text-slate-500 font-label-md mb-2">Documents Available</p>
+<h3 class="text-display-lg font-display-lg">452</h3>
+<div class="mt-2 flex items-center text-indigo-600 font-label-sm">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="add">add</span>
+                        24 added this week
+                    </div>
+</div>
+<div class="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600">
+<span class="material-symbols-outlined" data-icon="article">article</span>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+<div>
+<p class="text-slate-500 font-label-md mb-2">Recent Chats</p>
+<h3 class="text-display-lg font-display-lg">86</h3>
+<div class="mt-2 flex items-center text-emerald-600 font-label-sm">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="trending_up">trending_up</span>
+                        +5% active sessions
+                    </div>
+</div>
+<div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+</div>
+</div>
+<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-start justify-between">
+<div>
+<p class="text-slate-500 font-label-md mb-2">Avg. Response Time</p>
+<h3 class="text-display-lg font-display-lg">1.4s</h3>
+<div class="mt-2 flex items-center text-slate-500 font-label-sm">
+<span class="material-symbols-outlined text-[16px] mr-1" data-icon="bolt">bolt</span>
+                        AI Engine Optimized
+                    </div>
+</div>
+<div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+</div>
+</div>
+</section>
+<!-- Quick Ask Section (Hero UI) -->
+<section class="relative bg-primary-container rounded-2xl p-1 lg:p-1 overflow-hidden shadow-xl">
+<div class="absolute inset-0 bg-gradient-to-br from-primary via-primary-container to-indigo-800 opacity-90"></div>
+<!-- Abstract decorative elements -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-400/20 rounded-full blur-3xl"></div>
+<div class="relative z-10 p-8 lg:p-12 flex flex-col items-center text-center">
+<h3 class="text-display-xl font-display-xl text-white mb-6">How can I help you today?</h3>
+<div class="w-full max-w-2xl relative">
+<input class="w-full py-5 pl-14 pr-6 rounded-2xl border-none shadow-2xl focus:ring-4 focus:ring-indigo-400/50 text-body-lg text-slate-900 bg-white/95 backdrop-blur-sm" placeholder="Ask anything about company policies..." type="text"/>
+<span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-3xl" data-icon="search">search</span>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 bg-primary text-white p-2.5 rounded-xl hover:bg-indigo-700 transition-all shadow-md">
+<span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<div class="mt-6 flex flex-wrap justify-center gap-3">
+<span class="text-indigo-100 font-label-sm self-center mr-2">Try asking:</span>
+<button class="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-label-sm hover:bg-white/20 transition-all">"Leave policy"</button>
+<button class="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-label-sm hover:bg-white/20 transition-all">"VPN reset"</button>
+<button class="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-label-sm hover:bg-white/20 transition-all">"Expense claims"</button>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+<!-- Recent Conversations -->
+<section class="xl:col-span-2 space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-h2 font-h2 text-slate-900">Recent Conversations</h3>
+<button class="text-primary font-label-md hover:underline">View all history</button>
+</div>
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 divide-y divide-slate-50">
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-label-md text-slate-900">Holiday entitlement for 2024</h4>
+<span class="text-caption text-slate-400">2 hours ago</span>
+</div>
+<p class="text-body-md text-slate-500 line-clamp-1">"Based on your 2-year tenure, you are entitled to 25 days of paid annual leave plus public holidays..."</p>
+</div>
+</div>
+</div>
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-label-md text-slate-900">Health insurance provider list</h4>
+<span class="text-caption text-slate-400">Yesterday</span>
+</div>
+<p class="text-body-md text-slate-500 line-clamp-1">"Our current health benefit partners include Bupa and AXA. You can find the full list of dental clinics..."</p>
+</div>
+</div>
+</div>
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-label-md text-slate-900">Employee Referral Program</h4>
+<span class="text-caption text-slate-400">Oct 22</span>
+</div>
+<p class="text-body-md text-slate-500 line-clamp-1">"Yes, referral bonuses are paid out 90 days after the new hire's start date, provided they are still employed..."</p>
+</div>
+</div>
+</div>
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-label-md text-slate-900">Request for new hardware</h4>
+<span class="text-caption text-slate-400">Oct 21</span>
+</div>
+<p class="text-body-md text-slate-500 line-clamp-1">"To request a MacBook Pro upgrade, please submit a ticket via the IT Portal and include your manager's approval..."</p>
+</div>
+</div>
+</div>
+<div class="p-4 hover:bg-slate-50 transition-colors cursor-pointer group">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-center mb-1">
+<h4 class="font-label-md text-slate-900">Pension scheme contribution change</h4>
+<span class="text-caption text-slate-400">Oct 20</span>
+</div>
+<p class="text-body-md text-slate-500 line-clamp-1">"You can adjust your voluntary contributions at any time through the Payroll portal under 'My Benefits'..."</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Suggested Documents -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-h2 font-h2 text-slate-900">Library</h3>
+<button class="text-primary font-label-md hover:underline">Explore</button>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 group cursor-pointer hover:border-indigo-200 transition-all">
+<div class="w-full h-32 rounded-lg bg-slate-50 overflow-hidden relative">
+<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" data-alt="Modern office desk with open laptop and legal documents with warm afternoon lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFqvoJkSG2oTMcGIDD7bCnOZ2dlwx_N22HHFUlTdgQMfjNKUr693U060W64UKVmetOlI9MCnhHSekb2z0StaA37kACN1cmTySIpfAAyuXGW1C5DePaMXT9QV4yaxLDZG7h4EAEQXmkPMQFnglPIUZU0uFoC5YOyhkYAXLXi208wFW9UOqoiC08Ako33_euJAXyzoRO6RrdAmCY-7mf2QizWMRx-kZBiBtHt_Dugdy-KFD1lrCGcLICs-rWiVB71VObqtv6h4k0tr2F"/>
+<div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-slate-700">PDF</div>
+</div>
+<div>
+<h4 class="font-label-md text-slate-900 line-clamp-1">2024 Employee Handbook</h4>
+<p class="text-caption text-slate-400">Updated 2 days ago</p>
+</div>
+</div>
+<div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 group cursor-pointer hover:border-indigo-200 transition-all">
+<div class="w-full h-32 rounded-lg bg-slate-50 overflow-hidden relative">
+<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" data-alt="Close-up of calculator and financial spreadsheet documents on a wooden desk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZX5sF-o-bFXNfTKq2xxOpyecoHWZC9ZTdk5lHK7yuMWKm2FqVN-RUzHnQKWVHPhQMExPdl_B90VPtQbACwo45vSVZHjYf60u29mt9r-plqgZ0AKN0W93DJRdsoVaGaG3C5CCN6wnhXoGMd09EDDwGZIsfH-5TkUyvSrdFECbveedPc7_NNMQwAyCTVO3tIN9mB0xUg1HDc7m8P-QbOM46KUe8SIAXMQXHrxTSvQGlGdIKIrpB1DBAqC8HAyzuxfTUkzKrdtUHNrVd"/>
+<div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-slate-700">DOCX</div>
+</div>
+<div>
+<h4 class="font-label-md text-slate-900 line-clamp-1">Travel Expense Policy v3.1</h4>
+<p class="text-caption text-slate-400">Updated 1 week ago</p>
+</div>
+</div>
+<div class="bg-indigo-50/50 p-6 rounded-xl border-2 border-dashed border-indigo-200 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-indigo-100/50 transition-colors">
+<span class="material-symbols-outlined text-indigo-400 mb-2" data-icon="upload_file">upload_file</span>
+<p class="font-label-md text-indigo-700">Contribute to Knowledge Base</p>
+<p class="text-caption text-indigo-400 mt-1">Upload PDF, DOCX or TXT</p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- FAB for Quick Assistant (Only on Home/Dashboard) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40 lg:w-auto lg:px-6 lg:rounded-2xl lg:gap-3">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="hidden lg:inline font-label-md">New Conversation</span>
+</button>
+<!-- Mobile Navigation Overlay (Placeholder for Interaction) -->
+<div class="hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] lg:hidden">
+<div class="w-72 h-full bg-white shadow-2xl">
+<!-- Mobile Menu Content would go here -->
+</div>
+</div>
+</body></html>

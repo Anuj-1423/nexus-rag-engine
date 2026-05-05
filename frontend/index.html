@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth overflow-x-hidden">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Enterprise RAG - AI Powered Knowledge Platform</title>
+    <meta name="description"
+        content="ENTRAG: Enterprise AI knowledge platform. Chat with your internal documents and get cited answers in seconds.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        function applyTheme() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        applyTheme();
+        window.addEventListener('storage', (e) => { if (e.key === 'theme') applyTheme(); });
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (!menu) return;
+            menu.classList.toggle('hidden');
+            document.body.style.overflow = menu.classList.contains('hidden') ? '' : 'hidden';
+        }
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: "var(--primary)", "primary-hover": "var(--primary-hover)", "bg-surface": "var(--bg-surface)", "bg-card": "var(--bg-card)", "text-main": "var(--text-main)", "text-muted": "var(--text-muted)", border: "var(--border)" } } }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif
+        }
+
+        #bg3d {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: .45
+        }
+
+        .z1 {
+            position: relative;
+            z-index: 1
+        }
+
+        .gt {
+            background: linear-gradient(135deg, #3525cd, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .c3d {
+            transition: transform .35s, box-shadow .35s
+        }
+
+        .c3d:hover {
+            transform: perspective(800px) rotateY(-5deg) rotateX(3deg) scale(1.02);
+            box-shadow: 10px 18px 45px rgba(53, 37, 205, .18)
+        }
+
+        .fl {
+            animation: fl 5s ease-in-out infinite
+        }
+
+        .fl2 {
+            animation: fl 5s ease-in-out 1.5s infinite
+        }
+
+        .fl3 {
+            animation: fl 5s ease-in-out 3s infinite
+        }
+
+        @keyframes fl {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-12px)
+            }
+        }
+
+        .gw {
+            box-shadow: 0 0 0 1px rgba(53, 37, 205, .2), 0 8px 30px rgba(53, 37, 205, .1)
+        }
+
+        .sn {
+            background: linear-gradient(135deg, #3525cd, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .tk {
+            overflow: hidden;
+            white-space: nowrap;
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)
+        }
+
+        .tki {
+            display: inline-flex;
+            gap: 3rem;
+            animation: tka 25s linear infinite
+        }
+
+        @keyframes tka {
+            to {
+                transform: translateX(-50%)
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-bg-surface text-text-main antialiased overflow-x-hidden w-full">
+    <canvas id="bg3d"></canvas>
+
+    <!-- Nav -->
+    <nav id="mainNav"
+        class="fixed top-0 left-0 right-0 z-50 bg-bg-surface border-b border-border transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center h-16 w-full">
+            <a href="index.html" class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-brain text-xl"></i>
+                </div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">ENTRAG</span>
+            </a>
+
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="index.html" class="text-primary font-semibold">Home</a>
+                <a href="features.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Features</a>
+                <a href="models.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Models</a>
+                <a href="contact.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Contact</a>
+                <div class="h-6 w-px bg-border"></div>
+                <button id="themeToggle"
+                    class="text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <a href="login.html"
+                    class="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105 shadow-md flex items-center gap-2">
+                    Login <i class="fa-solid fa-arrow-right text-sm"></i>
+                </a>
+            </div>
+
+            <!-- Mobile Toggle -->
+            <div class="flex items-center gap-1 md:hidden">
+                <button id="themeToggleMobile"
+                    class="text-text-muted w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <button onclick="toggleMobileMenu()"
+                    class="text-text-main w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-[100] md:hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleMobileMenu()"></div>
+        <div
+            class="absolute right-0 top-0 bottom-0 w-72 bg-bg-surface border-l border-border p-8 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-10">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight">Menu</span>
+                </div>
+                <button onclick="toggleMobileMenu()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="flex flex-col gap-2 flex-1">
+                <a href="index.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-primary bg-primary/10 font-bold transition-all">
+                    <i class="fa-solid fa-house w-6 text-xl"></i> Home
+                </a>
+                <a href="features.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-layer-group w-6 text-xl"></i> Features
+                </a>
+                <a href="models.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-microchip w-6 text-xl"></i> Models
+                </a>
+                <a href="contact.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-envelope w-6 text-xl"></i> Contact
+                </a>
+                <div class="h-px bg-border my-6"></div>
+                <a href="login.html"
+                    class="bg-primary text-white p-4 rounded-2xl font-bold text-center shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Login</a>
+                <a href="register.html"
+                    class="border border-border text-text-main p-4 rounded-2xl font-bold text-center hover:bg-gray-50 dark:hover:bg-slate-800 transition-all mt-3">Register</a>
+            </div>
+            <div class="mt-auto pt-8 border-t border-border">
+                <p class="text-[10px] uppercase tracking-widest font-black text-text-muted mb-4 text-center">Connected
+                    to Enterprise RAG</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- HERO -->
+    <section class="relative min-h-screen flex items-center pt-24 overflow-hidden">
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none">
+            <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/15 rounded-full blur-[120px]"></div>
+            <div class="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-accent/15 rounded-full blur-[120px]">
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 py-20 w-full relative z-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="text-center lg:text-left">
+                    <div
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold mb-8 border border-primary/20">
+                        <span class="relative flex h-2 w-2"><span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span><span
+                                class="relative inline-flex h-2 w-2 rounded-full bg-primary"></span></span>
+                        v2.0 Enterprise Release
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-black leading-[1.08] mb-8 tracking-tight">Your
+                        Documents.<br><span class="gt">Answered Instantly.</span></h1>
+                    <p class="text-xl text-text-muted leading-relaxed mb-12 max-w-2xl mx-auto lg:mx-0">ENTRAG is the
+                        enterprise AI knowledge platform that lets your teams chat with internal documents and get
+                        cited, accurate answers in seconds.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-12 justify-center lg:justify-start">
+                        <a href="login.html"
+                            class="bg-primary hover:bg-primary-hover text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all hover:scale-105 shadow-2xl shadow-primary/30 flex items-center justify-center gap-3">Start
+                            Free Trial <i class="fa-solid fa-rocket"></i></a>
+                        <a href="contact.html"
+                            class="glass text-text-main px-10 py-5 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-800">Book
+                            a Demo <i class="fa-solid fa-play text-sm"></i></a>
+                    </div>
+                    <div class="flex flex-wrap gap-8 text-sm text-text-muted justify-center lg:justify-start">
+                        <span class="flex items-center gap-2 font-medium"><i
+                                class="fa-solid fa-check text-emerald-500"></i> No credit card</span>
+                        <span class="flex items-center gap-2 font-medium"><i
+                                class="fa-solid fa-check text-emerald-500"></i> SOC 2 Certified</span>
+                        <span class="flex items-center gap-2 font-medium"><i
+                                class="fa-solid fa-check text-emerald-500"></i> On-premise option</span>
+                    </div>
+                </div>
+                <div class="relative group mt-12 lg:mt-0">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-tr from-primary/30 to-accent/30 rounded-[2.5rem] blur-2xl group-hover:blur-3xl transition-all duration-500 -z-10">
+                    </div>
+                    <div
+                        class="glass p-3 rounded-[2.5rem] border border-border shadow-2xl overflow-hidden max-w-lg mx-auto lg:max-w-none">
+                        <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2070&auto=format&fit=crop"
+                            alt="ENTRAG 3D AI Brain"
+                            class="rounded-[2rem] w-full object-cover c3d fl transition-transform duration-700 group-hover:scale-[1.03]">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUSTED BY TICKER -->
+    <section class="py-12 border-y border-border glass relative z-10">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="text-center text-xs font-black uppercase tracking-[0.2em] text-text-muted mb-8 opacity-60">Trusted
+                by Industry Leaders</p>
+            <div class="tk">
+                <div class="tki">
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-landmark"></i> Goldman Bank</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-hospital"></i> MedSystems</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-gavel"></i> LegalPro</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-microchip"></i> TechVault</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-flask"></i> BioResearch</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-building"></i> Acme Corp</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-landmark"></i> Goldman Bank</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-hospital"></i> MedSystems</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-gavel"></i> LegalPro</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-microchip"></i> TechVault</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-flask"></i> BioResearch</span>
+                    <span
+                        class="flex items-center gap-3 text-text-muted font-bold text-lg opacity-40 grayscale hover:grayscale-0 transition-all"><i
+                            class="fa-solid fa-building"></i> Acme Corp</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="z1 py-24">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4 border border-primary/20">
+                    <i class="fa-solid fa-diagram-project text-xs"></i> How It Works</div>
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-4">From Upload to Answer in <span class="gt">3
+                        Steps</span></h2>
+                <p class="text-text-muted text-xl max-w-2xl mx-auto">No complex setup. No ML expertise needed. Just
+                    upload, ask, and get cited answers.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                <div class="card p-8 c3d text-center gw fl">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl mx-auto mb-6 shadow-lg shadow-blue-500/20">
+                        <i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold mb-4">
+                        1</div>
+                    <h3 class="text-xl font-bold mb-3">Upload Documents</h3>
+                    <p class="text-text-muted leading-relaxed">Drag and drop PDFs, DOCX, or TXT files. Our pipeline
+                        auto-chunks, embeds, and indexes them into a vector store in seconds.</p>
+                </div>
+                <div class="card p-8 c3d text-center gw fl2">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-2xl mx-auto mb-6 shadow-lg shadow-purple-500/20">
+                        <i class="fa-solid fa-magnifying-glass"></i></div>
+                    <div
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 text-white text-sm font-bold mb-4">
+                        2</div>
+                    <h3 class="text-xl font-bold mb-3">Ask Anything</h3>
+                    <p class="text-text-muted leading-relaxed">Type your question in natural language. FAISS performs
+                        semantic vector search to find the most relevant document chunks instantly.</p>
+                </div>
+                <div class="card p-8 c3d text-center gw fl3">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-2xl mx-auto mb-6 shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-comments"></i></div>
+                    <div
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white text-sm font-bold mb-4">
+                        3</div>
+                    <h3 class="text-xl font-bold mb-3">Get Cited Answers</h3>
+                    <p class="text-text-muted leading-relaxed">The LLM generates a precise, hallucination-free response
+                        grounded in your documents with exact source citations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section class="z1 py-24 bg-black/5 dark:bg-white/5 border-y border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4 border border-primary/20">
+                        <i class="fa-solid fa-server text-xs"></i> Architecture</div>
+                    <h2 class="text-4xl font-extrabold mb-4">Built on a <span class="gt">RAG Pipeline</span></h2>
+                    <p class="text-text-muted text-lg leading-relaxed mb-8">ENTRAG follows the Retrieval-Augmented
+                        Generation pattern, combining the precision of vector search with the fluency of large language
+                        models.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-primary"><i
+                                class="fa-solid fa-database text-primary text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Document Store</h4>
+                                <p class="text-text-muted text-sm">MySQL metadata catalog with file tracking,
+                                    versioning, and role-based access policies.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-purple-500"><i
+                                class="fa-solid fa-cube text-purple-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Embedding Engine</h4>
+                                <p class="text-text-muted text-sm">Documents are chunked and converted to dense vectors
+                                    using state-of-the-art embedding models.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-blue-500"><i
+                                class="fa-solid fa-bolt text-blue-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">FAISS Vector Index</h4>
+                                <p class="text-text-muted text-sm">Sub-200ms similarity search across millions of
+                                    embeddings using Facebook AI Similarity Search.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-emerald-500"><i
+                                class="fa-solid fa-brain text-emerald-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">LLM Synthesis</h4>
+                                <p class="text-text-muted text-sm">Retrieved context is sent to your chosen LLM (Llama
+                                    3, Mistral, GPT-4) for answer generation with citations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-primary/15 to-purple-500/15 rounded-3xl blur-2xl">
+                    </div>
+                    <img src="images/landing_architecture.png" alt="RAG Architecture Diagram"
+                        class="relative rounded-3xl shadow-2xl w-full object-cover c3d">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="z1 py-20">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="card p-8 c3d text-center gw">
+                    <p class="text-5xl font-black sn mb-2">99.9%</p>
+                    <p class="text-text-muted text-sm font-medium">Uptime SLA</p>
+                </div>
+                <div class="card p-8 c3d text-center gw">
+                    <p class="text-5xl font-black sn mb-2">&lt;200ms</p>
+                    <p class="text-text-muted text-sm font-medium">P95 Query Latency</p>
+                </div>
+                <div class="card p-8 c3d text-center gw">
+                    <p class="text-5xl font-black sn mb-2">10M+</p>
+                    <p class="text-text-muted text-sm font-medium">Docs Indexed</p>
+                </div>
+                <div class="card p-8 c3d text-center gw">
+                    <p class="text-5xl font-black sn mb-2">&lt;2%</p>
+                    <p class="text-text-muted text-sm font-medium">Hallucination Rate</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- USE CASES -->
+    <section class="z1 py-24 bg-black/5 dark:bg-white/5 border-y border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 text-sm font-semibold mb-4 border border-purple-200 dark:border-purple-800">
+                    <i class="fa-solid fa-briefcase text-xs"></i> Use Cases</div>
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Built for <span class="gt">Every Industry</span>
+                </h2>
+                <p class="text-text-muted text-xl max-w-2xl mx-auto">From legal to healthcare, ENTRAG adapts to your
+                    domain with zero custom training.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-6 c3d gw fl">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-gavel"></i></div>
+                    <h3 class="font-bold mb-2">Legal</h3>
+                    <p class="text-text-muted text-sm">Search case law, contracts, and compliance policies. Find
+                        precedents and clauses in seconds instead of hours.</p>
+                </div>
+                <div class="card p-6 c3d gw fl2">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-hospital"></i></div>
+                    <h3 class="font-bold mb-2">Healthcare</h3>
+                    <p class="text-text-muted text-sm">Query clinical protocols, drug interactions, and patient care
+                        guidelines with HIPAA-grade security.</p>
+                </div>
+                <div class="card p-6 c3d gw fl3">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-chart-line"></i></div>
+                    <h3 class="font-bold mb-2">Finance</h3>
+                    <p class="text-text-muted text-sm">Audit trail queries, regulatory document retrieval, and risk
+                        assessment from internal reports.</p>
+                </div>
+                <div class="card p-6 c3d gw fl">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-code"></i></div>
+                    <h3 class="font-bold mb-2">Engineering</h3>
+                    <p class="text-text-muted text-sm">Search technical docs, API specs, and architecture decisions.
+                        Onboard new engineers 10x faster.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="z1 py-24">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-sm font-semibold mb-4 border border-emerald-200 dark:border-emerald-800">
+                    <i class="fa-solid fa-quote-left text-xs"></i> Testimonials</div>
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-4">What Teams Are <span class="gt">Saying</span></h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="card p-8 c3d gw">
+                    <div class="flex gap-1 text-yellow-400 mb-4"><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p class="text-text-muted leading-relaxed mb-6">"ENTRAG cut our policy lookup time from 45 minutes
+                        to under 10 seconds. Our compliance team can't believe how fast they get cited answers from our
+                        regulatory docs."</p>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                            SP</div>
+                        <div>
+                            <p class="font-bold text-sm">Sarah P.</p>
+                            <p class="text-text-muted text-xs">VP of Compliance, FinServe Inc.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-8 c3d gw">
+                    <div class="flex gap-1 text-yellow-400 mb-4"><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p class="text-text-muted leading-relaxed mb-6">"We uploaded 50,000 clinical protocols and within
+                        minutes our doctors could query them conversationally. The citation feature builds trust like
+                        nothing else."</p>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-white font-bold text-sm">
+                            MR</div>
+                        <div>
+                            <p class="font-bold text-sm">Dr. Michael R.</p>
+                            <p class="text-text-muted text-xs">CTO, MedSystems Health</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-8 c3d gw">
+                    <div class="flex gap-1 text-yellow-400 mb-4"><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                            class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p class="text-text-muted leading-relaxed mb-6">"New engineers used to take 3 weeks to find their
+                        way around our codebase docs. With ENTRAG, day-one onboarding queries get instant, accurate
+                        answers."</p>
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-bold text-sm">
+                            AK</div>
+                        <div>
+                            <p class="font-bold text-sm">Arun K.</p>
+                            <p class="text-text-muted text-xs">Engineering Lead, TechVault</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="z1 py-24 bg-gradient-to-r from-primary to-purple-600 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+            <div class="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-6">Stop Searching.<br>Start Finding.</h2>
+            <p class="text-white/80 text-xl mb-10 max-w-2xl mx-auto">Deploy ENTRAG in under 30 minutes and give your
+                entire organization instant access to the knowledge locked inside your documents.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="login.html"
+                    class="bg-white text-primary font-bold px-10 py-4 rounded-xl transition-all hover:scale-105 shadow-xl text-lg">Get
+                    Started Free</a>
+                <a href="contact.html"
+                    class="border-2 border-white/50 text-white font-bold px-10 py-4 rounded-xl transition-all hover:border-white hover:scale-105 text-lg">Talk
+                    to Sales</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="z1 py-14 border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white">
+                            <i class="fa-solid fa-brain text-sm"></i></div>
+                        <span class="font-bold text-lg">ENTRAG</span>
+                    </div>
+                    <p class="text-text-muted text-sm leading-relaxed">Enterprise AI Knowledge Platform. Chat with your
+                        internal documents and get cited answers.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider">Product</h4>
+                    <ul class="space-y-2 text-text-muted text-sm">
+                        <li><a href="features.html" class="hover:text-primary transition-colors">Features</a></li>
+                        <li><a href="models.html" class="hover:text-primary transition-colors">AI Models</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Pricing</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider">Company</h4>
+                    <ul class="space-y-2 text-text-muted text-sm">
+                        <li><a href="#" class="hover:text-primary transition-colors">About</a></li>
+                        <li><a href="contact.html" class="hover:text-primary transition-colors">Contact</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Careers</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider">Legal</h4>
+                    <ul class="space-y-2 text-text-muted text-sm">
+                        <li><a href="#" class="hover:text-primary transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">SOC 2 Report</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">GDPR</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-text-muted text-sm">&copy; 2026 Enterprise RAG Platform. All rights reserved.</p>
+                <div class="flex gap-4 text-text-muted">
+                    <a href="#" class="hover:text-primary transition-colors"><i
+                            class="fa-brands fa-twitter text-lg"></i></a>
+                    <a href="#" class="hover:text-primary transition-colors"><i
+                            class="fa-brands fa-github text-lg"></i></a>
+                    <a href="#" class="hover:text-primary transition-colors"><i
+                            class="fa-brands fa-linkedin text-lg"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+            (function () {
+                const c = document.getElementById("bg3d");
+                if (!c || !window.THREE) return;
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ canvas: c, alpha: true, antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                camera.position.z = 30;
+
+                const N = 200;
+                const geo = new THREE.BufferGeometry();
+                const pos = new Float32Array(N * 3);
+                for (let i = 0; i < N * 3; i++)pos[i] = (Math.random() - 0.5) * 60;
+                geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+                const mat = new THREE.PointsMaterial({ color: 0x6366f1, size: 0.15, transparent: true, opacity: 0.7 });
+                const pts = new THREE.Points(geo, mat);
+                scene.add(pts);
+
+                const lGeo = new THREE.BufferGeometry();
+                const lMat = new THREE.LineBasicMaterial({ color: 0x6366f1, transparent: true, opacity: 0.08 });
+                const lines = new THREE.LineSegments(lGeo, lMat);
+                scene.add(lines);
+
+                let mx = 0, my = 0;
+                document.addEventListener("mousemove", e => { mx = (e.clientX / window.innerWidth - 0.5) * 2; my = (e.clientY / window.innerHeight - 0.5) * 2 });
+
+                function animate() {
+                    requestAnimationFrame(animate);
+                    const p = pts.geometry.attributes.position.array;
+                    for (let i = 0; i < N; i++) {
+                        p[i * 3 + 1] += Math.sin(Date.now() * 0.0005 + i) * 0.003;
+                        p[i * 3] += Math.cos(Date.now() * 0.0003 + i * 0.5) * 0.002;
+                    }
+                    pts.geometry.attributes.position.needsUpdate = true;
+
+                    const lp = [];
+                    for (let i = 0; i < N; i++) {
+                        for (let j = i + 1; j < N; j++) {
+                            const dx = p[i * 3] - p[j * 3], dy = p[i * 3 + 1] - p[j * 3 + 1], dz = p[i * 3 + 2] - p[j * 3 + 2];
+                            if (dx * dx + dy * dy + dz * dz < 25) {
+                                lp.push(p[i * 3], p[i * 3 + 1], p[i * 3 + 2], p[j * 3], p[j * 3 + 1], p[j * 3 + 2]);
+                            }
+                        }
+                    }
+                    lGeo.setAttribute("position", new THREE.Float32BufferAttribute(lp, 3));
+
+                    camera.position.x += (mx * 2 - camera.position.x) * 0.02;
+                    camera.position.y += (-my * 2 - camera.position.y) * 0.02;
+                    camera.lookAt(scene.position);
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                window.addEventListener("resize", () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            })();
+
+        // Connect theme toggles
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtns = ['themeToggle', 'themeToggleMobile'];
+            toggleBtns.forEach(id => {
+                document.getElementById(id)?.addEventListener('click', toggleDarkMode);
+            });
+        });
+    </script>
+</body>
+
+</html>
