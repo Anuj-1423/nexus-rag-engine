@@ -146,7 +146,9 @@
 
         async function loadProfile() {
             try {
-                const res = await fetch(`/profile/${encodeURIComponent(email)}`);
+                const res = await fetch(`/profile/${encodeURIComponent(email)}`, {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
                 if (!res.ok) throw new Error('Failed to load profile');
                 const data = await res.json();
                 
@@ -196,6 +198,7 @@
             try {
                 const res = await fetch('/profile', {
                     method: 'POST',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                     body: formData
                 });
                 

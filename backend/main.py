@@ -4,7 +4,7 @@ import logging
 import shutil
 import asyncio
 from typing import List, Optional
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Response
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Response, Header, Depends
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -59,7 +59,20 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-from auth import hash_password, verify_password, create_token
+from auth import hash_password, verify_password, create_token, verify_token
+
+async def get_current_user(authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(401, "Authorization header missing")
+    token = authorization.replace("Bearer ", "")
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(401, "Invalid or expired session. Please login again.")
+    return payload
+
+def verify_owner(email: str, current_user: dict):
+    if email != current_user.get("email") and current_user.get("role") != "admin":
+        raise HTTPException(403, "Access denied: You do not own this resource")
 
 @app.post('/register')
 def register(data: RegisterRequest):
@@ -130,7 +143,8 @@ def login(data: LoginRequest):
         if 'conn' in locals(): conn.close()
 
 @app.get('/profile/{email}')
-def get_profile(email: str):
+def get_profile(email: str, current_user: dict = Depends(get_current_user)):
+    verify_owner(email, current_user)
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
@@ -156,8 +170,10 @@ async def update_profile(
     full_name: str = Form(...),
     phone: str = Form(""),
     address: str = Form(""),
-    profile_pic: Optional[UploadFile] = File(None)
+    profile_pic: Optional[UploadFile] = File(None),
+    current_user: dict = Depends(get_current_user)
 ):
+    verify_owner(email, current_user)
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
@@ -187,7 +203,8 @@ async def update_profile(
         conn.close()
 
 @app.post('/upload')
-async def upload_document(email: str, scope: str = "global", file: UploadFile = File(...)):
+async def upload_document(email: str, scope: str = "global", file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    verify_owner(email, current_user)
     # 1. Auth & Initial Validation
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
@@ -258,7 +275,9 @@ class AskRequest(BaseModel):
     mode: str = "combined"
 
 @app.post('/ask')
-async def ask_question(data: AskRequest):
+async def ask_question(data: AskRequest, current_user: dict = Depends(get_current_user)):
+    verify_owner(data.email, current_user)
+    # Use to_thread for blocking database calls
     # Use to_thread for blocking database calls
     conn = await asyncio.to_thread(get_db_connection, DB_NAME)
     cursor = conn.cursor()
@@ -296,7 +315,10 @@ async def ask_question(data: AskRequest):
         await asyncio.to_thread(conn.close)
 
 @app.get('/admin/stats')
-def admin_stats():
+def admin_stats(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "Access denied: Admin role required")
+        
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
@@ -314,18 +336,17 @@ def admin_stats():
         conn.close()
 
 class BlockRequest(BaseModel):
-    admin_email: str
     is_blocked: bool
 
 @app.get('/admin/users')
-def get_all_users(admin_email: str):
+def get_all_users(current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "Access denied: Admin role required")
+        
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT role FROM users WHERE email = %s", (admin_email,))
-        admin = cursor.fetchone()
-        if not admin or admin[0] != 'admin':
-            raise HTTPException(403, "Unauthorized")
+        # Role check already done
         cursor.execute("SELECT email, full_name, role, is_blocked FROM users ORDER BY created_at DESC")
         return [{"email": r[0], "name": r[1], "role": r[2], "is_blocked": bool(r[3])} for r in cursor.fetchall()]
     finally:
@@ -333,14 +354,14 @@ def get_all_users(admin_email: str):
         conn.close()
 
 @app.post('/admin/users/{user_email}/block')
-def toggle_block_user(user_email: str, data: BlockRequest):
+def toggle_block_user(user_email: str, data: BlockRequest, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "Access denied: Admin role required")
+        
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT role FROM users WHERE email = %s", (data.admin_email,))
-        admin = cursor.fetchone()
-        if not admin or admin[0] != 'admin':
-            raise HTTPException(403, "Unauthorized")
+        # Role check already done
         
         cursor.execute("UPDATE users SET is_blocked = %s WHERE email = %s", (data.is_blocked, user_email))
         conn.commit()
@@ -350,15 +371,14 @@ def toggle_block_user(user_email: str, data: BlockRequest):
         conn.close()
 
 @app.get('/admin/users/{user_email}/details')
-def get_user_details(user_email: str, admin_email: str):
+def get_user_details(user_email: str, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "Access denied: Admin role required")
+        
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
-        # Verify admin
-        cursor.execute("SELECT role FROM users WHERE email = %s", (admin_email,))
-        admin = cursor.fetchone()
-        if not admin or admin[0] != 'admin':
-            raise HTTPException(403, "Unauthorized")
+        # Role check already done
             
         # Get user details
         cursor.execute("SELECT full_name, email, phone, address, profile_pic, role, is_blocked FROM users WHERE email = %s", (user_email,))
@@ -390,7 +410,8 @@ def get_user_details(user_email: str, admin_email: str):
         conn.close()
 
 @app.get('/documents/{email}')
-def list_docs(email: str, response: Response):
+def list_docs(email: str, response: Response, current_user: dict = Depends(get_current_user)):
+    verify_owner(email, current_user)
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
@@ -402,7 +423,8 @@ def list_docs(email: str, response: Response):
         conn.close()
 
 @app.get('/history/{email}')
-def get_history(email: str):
+def get_history(email: str, current_user: dict = Depends(get_current_user)):
+    verify_owner(email, current_user)
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:
@@ -413,7 +435,8 @@ def get_history(email: str):
         conn.close()
 
 @app.delete('/documents/{email}/{filename}')
-def delete_doc(email: str, filename: str, scope: str = "global"):
+def delete_doc(email: str, filename: str, scope: str = "global", current_user: dict = Depends(get_current_user)):
+    verify_owner(email, current_user)
     conn = get_db_connection(DB_NAME)
     cursor = conn.cursor()
     try:

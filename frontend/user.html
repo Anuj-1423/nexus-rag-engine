@@ -379,7 +379,9 @@
 
         async function loadLibrary() {
             try {
-                const res = await fetch(`/documents/${encodeURIComponent(userEmail)}?t=${Date.now()}`);
+                const res = await fetch(`/documents/${encodeURIComponent(userEmail)}?t=${Date.now()}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const data = await res.json();
                 const grid = document.getElementById('userDocGrid');
                 const personalDocs = data.filter(d => d.scope === 'personal');
@@ -432,7 +434,8 @@
                 
                 try {
                     const res = await fetch(`/documents/${encodeURIComponent(userEmail)}/${encodeURIComponent(documentToDelete)}?scope=personal`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token }
                     });
                     
                     if (res.ok) {
@@ -490,6 +493,7 @@
                     await new Promise((resolve, reject) => {
                         const xhr = new XMLHttpRequest();
                         xhr.open('POST', `/upload?email=${encodeURIComponent(userEmail)}&scope=personal`, true);
+                        xhr.setRequestHeader('Authorization', 'Bearer ' + token);
                         
                         xhr.upload.onprogress = (e) => {
                             if (e.lengthComputable) {
@@ -556,7 +560,10 @@
             try {
                 const res = await fetch('/ask', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
                     body: JSON.stringify({ email: userEmail, question: q, mode: currentMode })
                 });
                 const data = await res.json();
@@ -598,20 +605,25 @@
 
         function saveChatToLocal() {
             const container = document.getElementById('chatMessages');
-            localStorage.setItem('userChatHTML', container.innerHTML);
+            if (userEmail) {
+                localStorage.setItem(`userChatHTML_${userEmail}`, container.innerHTML);
+            }
         }
 
         function restoreChatFromLocal() {
-            const saved = localStorage.getItem('userChatHTML');
+            if (!userEmail) return;
+            const saved = localStorage.getItem(`userChatHTML_${userEmail}`);
             if (saved) {
                 document.getElementById('chatMessages').innerHTML = saved;
                 const container = document.getElementById('chatMessages');
                 container.scrollTop = container.scrollHeight;
+            } else {
+                startNewChat();
             }
         }
 
         function startNewChat() {
-            localStorage.removeItem('userChatHTML');
+            if (userEmail) localStorage.removeItem(`userChatHTML_${userEmail}`);
             document.getElementById('chatMessages').innerHTML = `
                 <div id="welcomeState" class="flex flex-col items-center justify-center py-20 text-center">
                     <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/10">
@@ -639,7 +651,9 @@
         }
 
         async function loadHistory() {
-            const res = await fetch(`/history/${userEmail}`);
+            const res = await fetch(`/history/${userEmail}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
             const data = await res.json();
             const list = document.getElementById('historyList');
             list.innerHTML = data.map(h => `
@@ -655,11 +669,15 @@
         }
 
         async function loadStats() {
-            const res = await fetch(`/history/${userEmail}`);
+            const res = await fetch(`/history/${userEmail}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
             const data = await res.json();
-            document.getElementById('myQueryCount').innerText = data.length;
+            document.getElementById('myQueryCount').innerText = data.length || 0;
             
-            const docRes = await fetch(`/documents/${userEmail}`);
+            const docRes = await fetch(`/documents/${userEmail}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
             const docs = await docRes.json();
             const personalDocs = docs.filter(d => d.scope === 'personal');
             document.getElementById('myDocCount').innerText = personalDocs.length;

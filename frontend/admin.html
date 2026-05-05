@@ -398,7 +398,11 @@
             localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         }
 
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        function logout() { 
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            window.location.replace('login.html'); 
+        }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -460,9 +464,8 @@
             }
         }
 
-        const userEmail = localStorage.getItem('email') || 'admin@enterprise.com';
         document.getElementById('adminEmail').innerText = userEmail;
-        document.getElementById('adminInitial').innerText = userEmail[0].toUpperCase();
+        document.getElementById('adminInitial').innerText = userEmail ? userEmail[0].toUpperCase() : 'A';
 
         function formatToIST(dateStr) {
             try {
@@ -477,7 +480,9 @@
 
         async function loadStats() {
             try {
-                const res = await fetch('/admin/stats');
+                const res = await fetch('/admin/stats', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const data = await res.json();
                 
                 if (document.getElementById('statUsers')) document.getElementById('statUsers').innerText = data.total_users || 0;
@@ -506,7 +511,9 @@
 
         async function loadLibrary() {
             try {
-                const res = await fetch(`/documents/${encodeURIComponent(userEmail)}?t=${Date.now()}`);
+                const res = await fetch(`/documents/${encodeURIComponent(userEmail)}?t=${Date.now()}`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 const data = await res.json();
                 const libTable = document.getElementById('adminDocList');
                 if (!libTable) return;
@@ -534,19 +541,16 @@
             } catch (err) { console.error('Library error:', err); }
         }
 
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        }
-
         const savedTab = localStorage.getItem('activeAdminTab') || 'stats';
         switchTab(savedTab);
         switchMode(currentMode);
         loadStats();
         restoreChatFromLocal();
-async function loadUsers() {
+        async function loadUsers() {
             try {
-                const res = await fetch(`/admin/users?admin_email=${encodeURIComponent(userEmail)}`);
+                const res = await fetch('/admin/users', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 if (!res.ok) throw new Error('Unauthorized');
                 const users = await res.json();
                 const list = document.getElementById('allUsersList');
@@ -583,8 +587,11 @@ async function loadUsers() {
             try {
                 const res = await fetch(`/admin/users/${encodeURIComponent(email)}/block`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ admin_email: userEmail, is_blocked: block })
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ is_blocked: block })
                 });
                 if (res.ok) {
                     loadUsers();
@@ -619,7 +626,8 @@ async function loadUsers() {
                 
                 try {
                     const res = await fetch(`/documents/${encodeURIComponent(userEmail)}/${encodeURIComponent(documentToDelete)}?scope=global`, {
-                        method: 'DELETE'
+                        method: 'DELETE',
+                        headers: { 'Authorization': 'Bearer ' + token }
                     });
                     
                     if (res.ok) {
@@ -653,7 +661,9 @@ async function loadUsers() {
 
         async function viewUserDetails(targetEmail) {
             try {
-                const res = await fetch(`/admin/users/${encodeURIComponent(targetEmail)}/details?admin_email=${encodeURIComponent(userEmail)}`);
+                const res = await fetch(`/admin/users/${encodeURIComponent(targetEmail)}/details`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
                 if (!res.ok) throw new Error('Failed to fetch details');
                 const data = await res.json();
                 
@@ -720,6 +730,7 @@ async function loadUsers() {
 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', `/upload?email=${encodeURIComponent(userEmail)}&scope=global`, true);
+            xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
@@ -776,7 +787,10 @@ async function loadUsers() {
             try {
                 const res = await fetch('/ask', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
                     body: JSON.stringify({ email: userEmail, question: q, mode: currentMode })
                 });
                 const data = await res.json();
@@ -817,11 +831,14 @@ async function loadUsers() {
 
         function saveChatToLocal() {
             const container = document.getElementById('chatMessages');
-            localStorage.setItem('adminChatHTML', container.innerHTML);
+            if (userEmail) {
+                localStorage.setItem(`adminChatHTML_${userEmail}`, container.innerHTML);
+            }
         }
 
         function restoreChatFromLocal() {
-            const saved = localStorage.getItem('adminChatHTML');
+            if (!userEmail) return;
+            const saved = localStorage.getItem(`adminChatHTML_${userEmail}`);
             if (saved) {
                 document.getElementById('chatMessages').innerHTML = saved;
                 const container = document.getElementById('chatMessages');
@@ -830,7 +847,7 @@ async function loadUsers() {
         }
 
         function startNewChat() {
-            localStorage.removeItem('adminChatHTML');
+            if (userEmail) localStorage.removeItem(`adminChatHTML_${userEmail}`);
             document.getElementById('chatMessages').innerHTML = `
                 <div class="flex flex-col items-center justify-center py-20 opacity-50">
                     <span class="material-symbols-outlined text-6xl mb-4">bolt</span>
