@@ -25,8 +25,8 @@ except:
 def get_db_connection(database=None):
     """Creates a fresh connection to the MySQL server with retries and SSL support."""
     import time
-    max_retries = 5
-    retry_delay = 3
+    max_retries = 3
+    retry_delay = 2
     
     last_err = None
     for i in range(max_retries):
@@ -38,27 +38,35 @@ def get_db_connection(database=None):
                 'password': DB_PASSWORD,
                 'port': DB_PORT,
                 'autocommit': True,
-                'connection_timeout': 10
+                'connect_timeout': 10,
+                'use_pure': True  # Force Pure Python for best compatibility on Render
             }
             
-            # SSL Configuration for Cloud (Aiven/Render)
-            # Aiven requires SSL. We use ssl_mode='REQUIRED' which is standard.
-            if DB_HOST != 'localhost' and DB_HOST != '127.0.0.1':
-                config['ssl_mode'] = 'REQUIRED'
-                # If we have a CA file, we could use it, but REQUIRED usually works with system certs
-                # config['ssl_ca'] = os.getenv('DB_SSL_CA') 
+            if database or DB_NAME:
+                config['database'] = database or DB_NAME
             
-            if database:
-                config['database'] = database
-                
-            return mysql.connector.connect(**config)
+            # SSL Configuration for Cloud (Aiven/Render)
+            if DB_HOST not in ['localhost', '127.0.0.1']:
+                config['ssl_mode'] = 'REQUIRED'
+
+            try:
+                return mysql.connector.connect(**config)
+            except TypeError as te:
+                if "ssl_mode" in str(te):
+                    # Fallback for drivers that don't support ssl_mode
+                    logger.warning("ssl_mode not supported, trying alternative SSL flags")
+                    config.pop('ssl_mode', None)
+                    config['ssl_disabled'] = False
+                    return mysql.connector.connect(**config)
+                raise te
+
         except mysql.connector.Error as err:
             last_err = err
-            logger.warning(f"Database connection attempt {i+1} failed (Host: {DB_HOST}, Port: {DB_PORT}). Retrying in {retry_delay}s... Error: {err}")
+            logger.warning(f"Database connection attempt {i+1} failed. Error: {err}")
             time.sleep(retry_delay)
     
-    logger.error(f"CRITICAL: Database connection failed after {max_retries} attempts: {last_err}")
-    raise Exception(f"Could not connect to MySQL at {DB_HOST}:{DB_PORT}. Please check your environment variables and Aiven status. Error: {last_err}")
+    logger.error(f"CRITICAL: Database connection failed: {last_err}")
+    raise Exception(f"Database connection failed: {last_err}")
 
 def init_db():
     """Initializes the database and tables if they don't exist."""
