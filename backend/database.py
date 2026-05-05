@@ -47,18 +47,12 @@ def get_db_connection(database=None):
             
             # SSL Configuration for Cloud (Aiven/Render)
             if DB_HOST not in ['localhost', '127.0.0.1']:
-                config['ssl_mode'] = 'REQUIRED'
+                # ssl_mode is often unsupported in newer C-extensions, 
+                # using ssl_disabled and ssl_verify_cert is more reliable.
+                config['ssl_disabled'] = False
+                config['ssl_verify_cert'] = False
 
-            try:
-                return mysql.connector.connect(**config)
-            except TypeError as te:
-                if "ssl_mode" in str(te):
-                    # Fallback for drivers that don't support ssl_mode
-                    logger.warning("ssl_mode not supported, trying alternative SSL flags")
-                    config.pop('ssl_mode', None)
-                    config['ssl_disabled'] = False
-                    return mysql.connector.connect(**config)
-                raise te
+            return mysql.connector.connect(**config)
 
         except mysql.connector.Error as err:
             last_err = err
