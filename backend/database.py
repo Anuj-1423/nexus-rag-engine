@@ -42,8 +42,8 @@ def get_db_connection(database=None):
                 'use_pure': True  # Force Pure Python for best compatibility on Render
             }
             
-            if database or DB_NAME:
-                config['database'] = database or DB_NAME
+            if database:
+                config['database'] = database
             
             # SSL Configuration for Cloud (Aiven/Render)
             if DB_HOST not in ['localhost', '127.0.0.1']:
@@ -69,15 +69,18 @@ def init_db():
         
         # 1. Create Database
         try:
+            # Connect to server WITHOUT database to create it
             conn_base = get_db_connection()
             cursor = conn_base.cursor()
             cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` DEFAULT CHARACTER SET 'utf8mb4'")
             cursor.close()
             conn_base.close()
+            logger.info(f"Database '{DB_NAME}' verified/created.")
         except Exception as e:
             logger.warning(f"Note: Could not run 'CREATE DATABASE' (might be lack of permissions). Continuing... Error: {e}")
 
         # 2. Create Tables
+        # Now connect WITH the database
         conn = get_db_connection(DB_NAME)
         cursor = conn.cursor()
         
