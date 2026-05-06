@@ -34,8 +34,10 @@ LLM_MODEL = "gemini-2.5-flash"
 RETRIEVAL_K = 20
 RERANK_TOP_N = 8
 
-BASE_CHROMA_PATH = "storage/chroma"
-CACHE_PATH = "storage/query_cache.json"
+# Use absolute paths for reliability
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_CHROMA_PATH = os.path.join(BASE_DIR, "storage", "chroma")
+CACHE_PATH = os.path.join(BASE_DIR, "storage", "query_cache.json")
 
 # Enhancement #8: Query Cache
 _query_cache = {}
@@ -75,6 +77,8 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
     """Custom wrapper for Google AI Embeddings using the official SDK."""
     def __init__(self):
         api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY is missing from environment. Please add it to your .env file.")
         self.client = genai.Client(api_key=api_key)
         self.model = "models/gemini-embedding-2"
         self._llm_model = None
@@ -84,27 +88,21 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         if self._llm_model:
             return self._llm_model
             
-        default_model = "gemini-1.5-flash"
-        try:
-            # Try to verify the default model exists
-            self.client.models.get(model=default_model)
-            self._llm_model = default_model
-            return self._llm_model
-        except Exception:
-            try:
-                # List available models and find a Flash model
-                models = self.client.models.list()
-                for m in models:
-                    # The correct attribute in google-genai is 'supported_actions'
-                    if m.supported_actions and "generateContent" in m.supported_actions and "flash" in m.name.lower():
-                        logger.info(f"Dynamically selected model: {m.name}")
-                        # Store name without 'models/' prefix if present
-                        self._llm_model = m.name.replace("models/", "")
-                        return self._llm_model
-            except Exception as e:
-                logger.error(f"Failed to list models: {e}")
+        # Preference order for models
+        preference = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-8b"]
         
-        return default_model # Fallback
+        for model_name in preference:
+            try:
+                self.client.models.get(model=model_name)
+                self._llm_model = model_name
+                logger.info(f"Verified available model: {model_name}")
+                return self._llm_model
+            except Exception:
+                continue
+        
+        # Absolute fallback
+        self._llm_model = "gemini-1.5-flash"
+        return self._llm_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
         """Embed a list of documents with batching to avoid API limits."""
@@ -339,6 +337,7 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
                 indices_to_search.append((personal_path, "personal"))
 
     if not indices_to_search:
+        logger.warning(f"No search indices found for mode={mode}, email={user_email}. Search paths checked: {global_path if mode in ['enterprise', 'combined'] else ''}, {personal_path if mode in ['personal', 'combined'] and user_email else ''}")
         return []
 
     emb = await asyncio.to_thread(get_embeddings)
@@ -398,9 +397,19 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
     client = genai.Client(api_key=api_key)
 
     # Step 1: Retrieve (Now Async)
-    ranked_results = await retrieve_context(query, mode, user_email)
+    try:
+        ranked_results = await retrieve_context(query, mode, user_email)
+    except Exception as e:
+        logger.error(f"Retrieval error: {e}")
+        return {"answer": f"AI Retrieval Error: {str(e)}", "sources": []}
+
     if not ranked_results:
-        return {"answer": "No relevant info found in the knowledge base.", "sources": []}
+        # Diagnostic: Check if any documents exist for this scope
+        return {
+            "answer": "No relevant info found in the knowledge base. Please ensure you have uploaded documents and they are in the 'ready' status.",
+            "sources": [],
+            "diagnostic": "Empty Knowledge Base"
+        }
 
     # Step 2: Context Building
     context_str = ""
@@ -456,46 +465,60 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
 
     system_prompt += "\n\nContext Documents (Use ONLY relevant parts):\n" + context_str
 
-    # LLM_MODEL changed to "gemini-1.5-flash-latest" at top of file
+    # Preference order for models to try (Verified from API)
+    models_to_try = [
+        "gemini-flash-latest", 
+        "gemini-2.5-flash", 
+        "gemini-2.0-flash", 
+        "gemini-pro-latest"
+    ]
     
-    max_retries = 3
-    # Use dynamic model discovery
-    active_model = get_embeddings().get_llm_model()
-    
-    for attempt in range(max_retries):
-        try:
-            # Use asyncio.to_thread for the blocking Google GenAI call
-            response = await asyncio.to_thread(
-                client.models.generate_content,
-                model=active_model,
-                config={"system_instruction": system_prompt},
-                contents=f"Question: {query}"
-            )
-            answer = response.text
-            
-            result = {
-                "answer": answer,
-                "sources": sources if asks_for_sources else [],
-                "model": active_model,
-                "cached": False
-            }
-            
-            # Save to cache
-            _query_cache[cache_key] = result
-            await asyncio.to_thread(save_cache)
-            
-            return result
-            
-        except Exception as e:
-            err_msg = str(e)
-            if "429" in err_msg and attempt < max_retries - 1:
-                wait_time = (attempt + 1) * 5 # Exponential-ish backoff
-                logger.warning(f"Rate limited (429) on {active_model}. Retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
-                await asyncio.sleep(wait_time)
-                continue
+    last_error = None
+    for active_model in models_to_try:
+        max_retries = 2 # Per model
+        for attempt in range(max_retries):
+            try:
+                # Use asyncio.to_thread for the blocking Google GenAI call
+                response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=active_model,
+                    config={"system_instruction": system_prompt},
+                    contents=f"Question: {query}"
+                )
+                answer = response.text
                 
-            logger.error(f"Google GenAI generation failed (Attempt {attempt+1}): {e}")
-            return {"answer": f"Error generating answer: {e}", "sources": []}
+                result = {
+                    "answer": answer,
+                    "sources": sources if asks_for_sources else [],
+                    "model": active_model,
+                    "cached": False
+                }
+                
+                # Save to cache
+                _query_cache[cache_key] = result
+                await asyncio.to_thread(save_cache)
+                
+                return result
+                
+            except Exception as e:
+                err_msg = str(e)
+                last_error = e
+                # Handle both 429 (Rate Limit/Quota) and 503 (Service Unavailable/High Demand)
+                if ("429" in err_msg or "503" in err_msg):
+                    if attempt < max_retries - 1:
+                        wait_time = (attempt + 1) * 2
+                        logger.warning(f"API busy ({'429' if '429' in err_msg else '503'}) on {active_model}. Retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        logger.warning(f"Model {active_model} exhausted. Switching to next model...")
+                        break # Try next model
+                else:
+                    # Non-retryable error
+                    logger.error(f"Google GenAI generation failed on {active_model}: {e}")
+                    break # Try next model
+    
+    return {"answer": f"Error generating answer: {str(last_error)}", "sources": []}
 
 def ingest_text(text: str, meta: dict):
     return ingest_document(text.encode(), meta.get("filename", "text.txt"))

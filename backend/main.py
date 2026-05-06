@@ -8,6 +8,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Response, He
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables
 try:
@@ -24,6 +25,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Enterprise Brain RAG API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health_check():
@@ -338,6 +348,20 @@ def admin_stats(current_user: dict = Depends(get_current_user)):
 class BlockRequest(BaseModel):
     is_blocked: bool
 
+@app.get('/admin/library')
+def get_admin_library(response: Response, current_user: dict = Depends(get_current_user)):
+    if current_user.get("role") != "admin":
+        raise HTTPException(403, "Access denied: Admin role required")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    conn = get_db_connection(DB_NAME)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT filename, status, uploaded_at, file_size_bytes, scope, owner_email FROM documents ORDER BY uploaded_at DESC")
+        return [{"filename": r[0], "status": r[1], "date": str(r[2]), "file_size_bytes": r[3], "scope": r[4], "owner": r[5]} for r in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.get('/admin/users')
 def get_all_users(current_user: dict = Depends(get_current_user)):
     if current_user.get("role") != "admin":
@@ -347,8 +371,14 @@ def get_all_users(current_user: dict = Depends(get_current_user)):
     cursor = conn.cursor()
     try:
         # Role check already done
-        cursor.execute("SELECT email, full_name, role, is_blocked FROM users ORDER BY created_at DESC")
-        return [{"email": r[0], "name": r[1], "role": r[2], "is_blocked": bool(r[3])} for r in cursor.fetchall()]
+        cursor.execute("""
+            SELECT u.email, u.full_name, u.role, u.is_blocked, COUNT(c.id) as query_count 
+            FROM users u 
+            LEFT JOIN chats c ON u.email = c.email 
+            GROUP BY u.email, u.full_name, u.role, u.is_blocked, u.created_at 
+            ORDER BY u.created_at DESC
+        """)
+        return [{"email": r[0], "name": r[1], "role": r[2], "is_blocked": bool(r[3]), "queries": r[4]} for r in cursor.fetchall()]
     finally:
         cursor.close()
         conn.close()
@@ -394,6 +424,10 @@ def get_user_details(user_email: str, current_user: dict = Depends(get_current_u
         cursor.execute("SELECT COUNT(*) FROM chats WHERE email = %s", (user_email,))
         query_count = cursor.fetchone()[0]
         
+        # Get chats
+        cursor.execute("SELECT question, answer, created_at FROM chats WHERE email = %s ORDER BY created_at DESC LIMIT 50", (user_email,))
+        chats = [{"question": r[0], "answer": r[1], "date": str(r[2])} for r in cursor.fetchall()]
+        
         return {
             "full_name": row[0] or "",
             "email": row[1],
@@ -403,7 +437,8 @@ def get_user_details(user_email: str, current_user: dict = Depends(get_current_u
             "role": row[5],
             "is_blocked": bool(row[6]),
             "doc_count": doc_count,
-            "query_count": query_count
+            "query_count": query_count,
+            "chats": chats
         }
     finally:
         cursor.close()
@@ -464,7 +499,8 @@ def delete_doc(email: str, filename: str, scope: str = "global", current_user: d
 @app.get("/{file_path:path}")
 async def serve_frontend(file_path: str):
     if file_path == "": file_path = "index.html"
-    full_path = os.path.join("../frontend", file_path)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    full_path = os.path.normpath(os.path.join(base_dir, "../frontend", file_path))
     if os.path.isfile(full_path): return FileResponse(full_path)
     if not file_path.endswith(".html"):
         hp = full_path + ".html"

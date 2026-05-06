@@ -204,6 +204,7 @@
                                     <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Document</th>
                                     <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Status</th>
                                     <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Uploaded At</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="adminDocList" class="divide-y divide-border">
@@ -245,9 +246,10 @@
                         <table class="w-full text-left">
                             <thead class="bg-gray-50 dark:bg-slate-800 border-b border-border">
                                 <tr>
-                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">User</th>
-                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Role</th>
-                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest">Status</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-left">User</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-left">Role</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-left">Status</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-left">Queries</th>
                                     <th class="px-6 py-4 text-xs font-bold text-text-muted uppercase tracking-widest text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -464,9 +466,6 @@
             }
         }
 
-        document.getElementById('adminEmail').innerText = userEmail;
-        document.getElementById('adminInitial').innerText = userEmail ? userEmail[0].toUpperCase() : 'A';
-
         function formatToIST(dateStr) {
             try {
                 const date = new Date(dateStr);
@@ -483,6 +482,11 @@
                 const res = await fetch('/admin/stats', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    showToast(errorData.detail || 'Failed to load statistics', 'error');
+                    return;
+                }
                 const data = await res.json();
                 
                 if (document.getElementById('statUsers')) document.getElementById('statUsers').innerText = data.total_users || 0;
@@ -511,20 +515,30 @@
 
         async function loadLibrary() {
             try {
-                const res = await fetch(`/documents/${encodeURIComponent(userEmail)}?t=${Date.now()}`, {
+                const res = await fetch('/admin/library', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    showToast(errorData.detail || 'Failed to load library', 'error');
+                    return;
+                }
                 const data = await res.json();
                 const libTable = document.getElementById('adminDocList');
                 if (!libTable) return;
 
-                const globalDocs = data.filter(d => d.scope === 'global');
-                libTable.innerHTML = globalDocs.map(d => `
+                // Show all global documents or everything (admins should see all)
+                const docsToShow = data; // data already sorted by backend
+                
+                libTable.innerHTML = docsToShow.map(d => `
                     <tr class="border-b border-border hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-primary">description</span>
-                                <span class="font-medium">${d.filename}</span>
+                                <div class="flex flex-col">
+                                    <span class="font-medium">${d.filename}</span>
+                                    <span class="text-[10px] text-text-muted">Owner: ${d.owner} | Scope: ${d.scope}</span>
+                                </div>
                             </div>
                         </td>
                         <td class="px-6 py-4">
@@ -532,7 +546,7 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-text-muted">${formatToIST(d.date)}</td>
                         <td class="px-6 py-4 text-right">
-                            <button onclick="deleteDocument('${d.filename}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                            <button onclick="deleteDocument('${d.filename}', '${d.owner}', '${d.scope}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">
                                 <span class="material-symbols-outlined text-sm">delete</span>
                             </button>
                         </td>
@@ -541,73 +555,165 @@
             } catch (err) { console.error('Library error:', err); }
         }
 
-        const savedTab = localStorage.getItem('activeAdminTab') || 'stats';
-        switchTab(savedTab);
-        switchMode(currentMode);
-        loadStats();
-        restoreChatFromLocal();
         async function loadUsers() {
             try {
                 const res = await fetch('/admin/users', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
-                if (!res.ok) throw new Error('Unauthorized');
                 const users = await res.json();
                 const list = document.getElementById('allUsersList');
                 if (!list) return;
+                
+                if (!Array.isArray(users) || users.length === 0) {
+                    list.innerHTML = '<tr><td colspan="4" class="text-center py-12 text-gray-500">No users found.</td></tr>';
+                    return;
+                }
 
                 list.innerHTML = users.map(u => `
                     <tr class="border-b border-border hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="px-6 py-4">
-                            <div class="font-bold">${u.name}</div>
-                            <div class="text-[10px] text-text-muted">${u.email}</div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-indigo-100 text-indigo-700 rounded-lg flex items-center justify-center font-bold">
+                                    ${u.name ? u.name[0].toUpperCase() : 'U'}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-bold">${u.name || 'Anonymous'}</span>
+                                    <span class="text-xs text-text-muted">${u.email}</span>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 uppercase text-xs font-bold text-primary">${u.role}</td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${u.is_blocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}">${u.is_blocked ? 'Suspended' : 'Active'}</span>
+                            <span class="px-2 py-1 text-[10px] font-black uppercase rounded bg-gray-100 dark:bg-slate-800 text-text-muted">
+                                ${u.role}
+                            </span>
                         </td>
-                        <td class="px-6 py-4 flex justify-end gap-2">
-                            <button onclick="viewUserDetails('${u.email}')" class="text-primary hover:bg-primary/10 px-3 py-1 rounded-lg transition-colors font-bold text-xs border border-primary/20">
-                                View
-                            </button>
-                            ${u.role !== 'admin' ? `
-                                <button onclick="toggleBlockUser('${u.email}', ${!u.is_blocked})" class="${u.is_blocked ? 'text-green-600 hover:bg-green-50' : 'text-red-500 hover:bg-red-50'} px-3 py-1 rounded-lg transition-colors font-bold text-xs border ${u.is_blocked ? 'border-green-200' : 'border-red-200'}">
-                                    ${u.is_blocked ? 'Unblock' : 'Suspend'}
+                        <td class="px-6 py-4">
+                            <span class="flex items-center gap-2 text-xs ${u.is_blocked ? 'text-red-500 font-bold' : 'text-green-500 font-bold'}">
+                                <span class="w-1.5 h-1.5 rounded-full ${u.is_blocked ? 'bg-red-500' : 'bg-green-500'}"></span>
+                                ${u.is_blocked ? 'Blocked' : 'Active'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 font-mono font-bold text-primary">${u.queries}</td>
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <button onclick="toggleBlock('${u.email}', ${u.is_blocked})" class="px-4 py-2 text-xs font-bold rounded-lg border border-border hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                                    ${u.is_blocked ? 'Unblock' : 'Block'}
                                 </button>
-                            ` : ''}
+                                <button onclick="viewUser('${u.email}')" class="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-500/10 transition-all">
+                                    View Profile
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `).join('');
             } catch (err) {
-                console.error('Users error:', err);
+                console.error(err);
+                showToast('Failed to load users', 'error');
             }
         }
 
-        async function toggleBlockUser(email, block) {
+        async function viewUser(email) {
+            try {
+                const res = await fetch(`/admin/users/${encodeURIComponent(email)}/details`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                if (!res.ok) throw new Error('Failed to fetch user details');
+                const data = await res.json();
+
+                // Populate Modal
+                document.getElementById('modalUserName').innerText = data.full_name || 'Anonymous';
+                document.getElementById('modalUserEmail').innerText = data.email;
+                document.getElementById('modalUserAvatar').innerText = (data.full_name ? data.full_name[0] : 'U').toUpperCase();
+                document.getElementById('modalDocCount').innerText = data.doc_count;
+                document.getElementById('modalQueryCount').innerText = data.query_count;
+                
+                const statusEl = document.getElementById('modalUserStatus');
+                statusEl.innerText = data.is_blocked ? 'Blocked' : 'Active';
+                statusEl.className = `text-xl font-black uppercase tracking-widest ${data.is_blocked ? 'text-red-500' : 'text-emerald-500'}`;
+
+                // Chat History
+                const chatContainer = document.getElementById('modalChatHistory');
+                if (data.chats && data.chats.length > 0) {
+                    chatContainer.innerHTML = data.chats.map(c => `
+                        <div class="p-5 rounded-2xl bg-gray-50 dark:bg-slate-800/50 border border-border space-y-3">
+                            <div class="flex justify-between items-start">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-text-muted">${formatToIST(c.date)}</span>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-sm font-bold text-primary flex items-start gap-2">
+                                    <span class="material-symbols-outlined text-sm mt-0.5">question_answer</span>
+                                    ${c.question}
+                                </p>
+                                <p class="text-sm text-text-muted bg-white dark:bg-slate-900/50 p-4 rounded-xl border border-border/50">
+                                    ${c.answer}
+                                </p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    chatContainer.innerHTML = `
+                        <div class="text-center py-10 opacity-30">
+                            <span class="material-symbols-outlined text-5xl mb-2">history</span>
+                            <p>No interaction history found</p>
+                        </div>
+                    `;
+                }
+
+                // Show Modal
+                const modal = document.getElementById('userDetailModal');
+                const content = document.getElementById('userDetailContent');
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } catch (err) {
+                console.error(err);
+                showToast('Failed to load user profile', 'error');
+            }
+        }
+
+        function closeUserModal() {
+            const modal = document.getElementById('userDetailModal');
+            const content = document.getElementById('userDetailContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        async function toggleBlock(email, currentlyBlocked) {
             try {
                 const res = await fetch(`/admin/users/${encodeURIComponent(email)}/block`, {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + token
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ is_blocked: block })
+                    body: JSON.stringify({ is_blocked: !currentlyBlocked })
                 });
                 if (res.ok) {
+                    showToast(`User ${!currentlyBlocked ? 'blocked' : 'unblocked'} successfully`);
                     loadUsers();
                     loadStats();
                 } else {
-                    alert('Failed to update user status');
                 }
             } catch (err) {
                 console.error('Toggle error:', err);
+                showToast('An error occurred while updating user status', 'error');
             }
         }
 
         let documentToDelete = null;
+        let deleteOwner = null;
+        let deleteScope = null;
 
-        function deleteDocument(filename) {
+        function deleteDocument(filename, owner, scope) {
             documentToDelete = filename;
+            deleteOwner = owner || userEmail;
+            deleteScope = scope || 'global';
+            
             document.getElementById('deleteFileName').innerText = filename;
             const modal = document.getElementById('deleteModal');
             const content = document.getElementById('deleteModalContent');
@@ -625,17 +731,18 @@
                 confirmBtn.disabled = true;
                 
                 try {
-                    const res = await fetch(`/documents/${encodeURIComponent(userEmail)}/${encodeURIComponent(documentToDelete)}?scope=global`, {
+                    const res = await fetch(`/documents/${encodeURIComponent(deleteOwner)}/${encodeURIComponent(documentToDelete)}?scope=${deleteScope}`, {
                         method: 'DELETE',
                         headers: { 'Authorization': 'Bearer ' + token }
                     });
                     
                     if (res.ok) {
-                        showToast('Global document deleted successfully', 'success');
+                        showToast(`${deleteScope === 'global' ? 'Global' : 'Personal'} document deleted successfully`, 'success');
                         loadLibrary();
                         loadStats();
                     } else {
-                        showToast('Failed to delete document', 'error');
+                        const errorData = await res.json();
+                        showToast(errorData.detail || 'Failed to delete document', 'error');
                     }
                 } catch (err) {
                     console.error('Delete error:', err);
@@ -659,58 +766,7 @@
             }, 200);
         }
 
-        async function viewUserDetails(targetEmail) {
-            try {
-                const res = await fetch(`/admin/users/${encodeURIComponent(targetEmail)}/details`, {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                });
-                if (!res.ok) throw new Error('Failed to fetch details');
-                const data = await res.json();
-                
-                document.getElementById('udName').innerText = data.full_name || 'N/A';
-                document.getElementById('udEmail').innerText = data.email;
-                document.getElementById('udRole').innerText = data.role;
-                document.getElementById('udPhone').innerText = data.phone || 'N/A';
-                document.getElementById('udAddress').innerText = data.address || 'N/A';
-                document.getElementById('udDocs').innerText = data.doc_count;
-                document.getElementById('udQueries').innerText = data.query_count;
-                
-                const statusSpan = document.getElementById('udStatus');
-                statusSpan.innerText = data.is_blocked ? 'Suspended' : 'Active';
-                statusSpan.className = data.is_blocked ? 'font-bold uppercase text-xs px-2 py-1 rounded-full bg-red-100 text-red-700' : 'font-bold uppercase text-xs px-2 py-1 rounded-full bg-green-100 text-green-700';
 
-                const initSpan = document.getElementById('udInitials');
-                const img = document.getElementById('udProfilePic');
-                initSpan.innerText = data.full_name ? data.full_name[0].toUpperCase() : data.email[0].toUpperCase();
-                if (data.profile_pic) {
-                    img.src = '/profiles/' + data.profile_pic;
-                    img.classList.remove('hidden');
-                    initSpan.classList.add('hidden');
-                } else {
-                    img.classList.add('hidden');
-                    initSpan.classList.remove('hidden');
-                }
-
-                const modal = document.getElementById('userDetailsModal');
-                const content = document.getElementById('userDetailsContent');
-                modal.classList.remove('hidden');
-                setTimeout(() => {
-                    modal.classList.remove('opacity-0');
-                    content.classList.remove('scale-95');
-                }, 10);
-
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        }
-
-        function closeUserDetailsModal() {
-            const modal = document.getElementById('userDetailsModal');
-            const content = document.getElementById('userDetailsContent');
-            modal.classList.add('opacity-0');
-            content.classList.add('scale-95');
-            setTimeout(() => { modal.classList.add('hidden'); }, 200);
-        }
 
         async function handleUpload() {
             const fileInput = document.getElementById('fileUpload');
@@ -793,12 +849,10 @@
                     },
                     body: JSON.stringify({ email: userEmail, question: q, mode: currentMode })
                 });
+
+                if (!res.ok) throw new Error('API failed');
                 const data = await res.json();
-                if (res.ok) {
-                    updateMessage(loadingId, data.answer);
-                } else {
-                    updateMessage(loadingId, data.detail || 'An error occurred.');
-                }
+                updateMessage(loadingId, data.answer || 'No response from engine.');
             } catch (err) {
                 updateMessage(loadingId, 'Connection lost. Is the AI server online?');
             }
@@ -857,18 +911,86 @@
             `;
         }
 
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-        }
-
-        // Dark mode already initialized in <head>
-        
-        const savedTab = localStorage.getItem('activeAdminTab') || 'stats';
-        switchTab(savedTab);
-        
-        loadStats();
-        restoreChatFromLocal();
+        // Initialization Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTab = localStorage.getItem('activeAdminTab') || 'stats';
+            switchTab(savedTab);
+            switchMode(currentMode);
+            restoreChatFromLocal();
+            
+            // Add Enter key listener for chat
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') sendChat();
+                });
+            }
+        });
     </script>
+    <!-- User Detail Modal -->
+    <div id="userDetailModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden opacity-0 transition-all duration-300 flex items-center justify-center p-4">
+        <div id="userDetailContent" class="bg-card w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-all duration-300 flex flex-col">
+            <div class="p-8 border-b border-border flex justify-between items-center bg-primary/5">
+                <div class="flex items-center gap-4">
+                    <div id="modalUserAvatar" class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-2xl font-bold text-primary border border-primary/20">
+                        U
+                    </div>
+                    <div>
+                        <h3 id="modalUserName" class="text-2xl font-black">User Name</h3>
+                        <p id="modalUserEmail" class="text-text-muted font-medium">user@example.com</p>
+                    </div>
+                </div>
+                <button onclick="closeUserModal()" class="w-10 h-10 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-8 space-y-8">
+                <!-- User Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6 border-primary/10 bg-primary/5">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-primary">description</span>
+                            <span class="text-xs font-black uppercase tracking-widest text-text-muted">Documents</span>
+                        </div>
+                        <h4 id="modalDocCount" class="text-3xl font-black">0</h4>
+                    </div>
+                    <div class="card p-6 border-indigo-500/10 bg-indigo-500/5">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-indigo-500">bolt</span>
+                            <span class="text-xs font-black uppercase tracking-widest text-text-muted">Total Queries</span>
+                        </div>
+                        <h4 id="modalQueryCount" class="text-3xl font-black">0</h4>
+                    </div>
+                    <div class="card p-6 border-emerald-500/10 bg-emerald-500/5">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="material-symbols-outlined text-emerald-500">verified_user</span>
+                            <span class="text-xs font-black uppercase tracking-widest text-text-muted">Account Status</span>
+                        </div>
+                        <h4 id="modalUserStatus" class="text-xl font-black uppercase tracking-widest">Active</h4>
+                    </div>
+                </div>
+
+                <!-- Chat History -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-lg font-black flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">forum</span>
+                            Interaction History
+                        </h4>
+                        <span class="text-xs text-text-muted font-bold">Last 50 queries</span>
+                    </div>
+                    <div id="modalChatHistory" class="space-y-4">
+                        <!-- Chats will load here -->
+                        <div class="text-center py-10 opacity-30">
+                            <span class="material-symbols-outlined text-5xl mb-2">history</span>
+                            <p>No interaction history found</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

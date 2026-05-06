@@ -162,6 +162,7 @@ def init_db():
         logger.info("Database system initialized.")
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
+        raise e
 
 if __name__ == "__main__":
     init_db()
