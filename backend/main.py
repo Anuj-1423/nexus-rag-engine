@@ -19,6 +19,7 @@ except ImportError:
 
 from database import get_db_connection, DB_NAME, init_db
 from rag import ingest_document, generate_rag_response, delete_document_from_vector
+from sync_docs import sync_document_status
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +53,9 @@ def startup_event():
         logger.info("Starting up: Initializing database...")
         init_db()
         logger.info("Database initialized successfully.")
+        
+        logger.info("Running document integrity sync...")
+        sync_document_status()
     except Exception as e:
         logger.error(f"FATAL: Database initialization failed: {e}")
         # We don't raise here so the server can at least start and show a health check,
@@ -250,7 +254,7 @@ async def upload_document(email: str, scope: str = "global", file: UploadFile = 
 
     # 2. AI Processing
     try:
-        result = ingest_document(file_bytes, filename, scope=scope, user_email=email)
+        result = await asyncio.to_thread(ingest_document, file_bytes, filename, scope, email)
 
         conn2 = get_db_connection(DB_NAME)
         cursor2 = conn2.cursor()

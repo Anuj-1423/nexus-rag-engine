@@ -6,6 +6,11 @@ import hashlib
 from google import genai
 from langchain_core.embeddings import Embeddings
 from langchain_chroma import Chroma
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from document_parser import extract_document_structure, SUPPORTED_EXTENSIONS
 from chunker import chunk_document, get_chunking_stats
@@ -206,9 +211,12 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
     total_sections = len(doc_structure.sections) if doc_structure.sections else 0
 
     # Chroma handles persistence automatically. If the directory exists, it loads and appends.
+    logger.info(f"Persisting {len(chunks)} chunks to {index_path}...")
     db = Chroma.from_documents(chunks, emb, persist_directory=index_path)
-
-    logger.info(f"Ingested '{filename}' into ChromaDB using Local HF Embeddings.")
+    
+    # Verify persistence
+    saved_count = len(db.get()['ids'])
+    logger.info(f"Ingested '{filename}' into ChromaDB. Total chunks in index: {saved_count}")
 
     return {
         "status": "ready",
@@ -337,7 +345,10 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
                 indices_to_search.append((personal_path, "personal"))
 
     if not indices_to_search:
-        logger.warning(f"No search indices found for mode={mode}, email={user_email}. Search paths checked: {global_path if mode in ['enterprise', 'combined'] else ''}, {personal_path if mode in ['personal', 'combined'] and user_email else ''}")
+        # Avoid NameError by ensuring paths are defined
+        g_path = get_index_path("global")
+        p_path = get_index_path("personal", user_email) if user_email else "N/A"
+        logger.warning(f"No search indices found for mode={mode}, email={user_email}. Search paths checked: {g_path}, {p_path}")
         return []
 
     emb = await asyncio.to_thread(get_embeddings)

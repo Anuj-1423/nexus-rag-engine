@@ -384,15 +384,15 @@
                 });
                 const data = await res.json();
                 const grid = document.getElementById('userDocGrid');
-                const personalDocs = data.filter(d => d.scope === 'personal');
-                
-                grid.innerHTML = personalDocs.length ? personalDocs.map(d => `
+                grid.innerHTML = data.length ? data.map(d => `
                     <div class="card p-6 flex flex-col gap-4 group hover:border-primary transition-all relative">
+                        ${d.scope === 'personal' ? `
                         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="deleteDocument('${d.filename}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Delete Document">
                                 <span class="material-symbols-outlined text-sm">delete</span>
                             </button>
                         </div>
+                        ` : ''}
                         <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                             <span class="material-symbols-outlined text-2xl">description</span>
                         </div>
@@ -400,11 +400,12 @@
                             <h4 class="font-bold truncate pr-8" title="${d.filename}">${d.filename}</h4>
                             <p class="text-xs text-text-muted">${d.date.split(' ')[0]}</p>
                         </div>
-                        <div class="mt-2">
+                        <div class="mt-2 flex gap-2">
                             <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase ${d.status === 'ready' ? 'bg-green-100 text-green-700' : (d.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700')}">${d.status}</span>
+                            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase ${d.scope === 'global' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}">${d.scope}</span>
                         </div>
                     </div>
-                `).join('') : '<div class="col-span-full py-20 text-center opacity-50">No personal documents yet.</div>';
+                `).join('') : '<div class="col-span-full py-20 text-center opacity-50">No documents available yet.</div>';
             } catch (err) {
                 showToast('Failed to load document library', 'error');
             }

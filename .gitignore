@@ -13,3 +13,7 @@ env/
 data/
 uploads/
 .DS_Store
+storage/
+temp_uploads/
+backend/storage/
+backend/temp_uploads/
