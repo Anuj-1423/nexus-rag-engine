@@ -146,6 +146,22 @@ def init_db():
                 check_cursor.close()
                 mig_conn.close()
 
+        def ensure_auto_increment(table, column='id'):
+            mig_conn = get_db_connection(DB_NAME)
+            try:
+                # This resolves older schemas where the id column exists but is not auto-incrementing.
+                mig_conn.cursor().execute(
+                    f"ALTER TABLE `{table}` MODIFY `{column}` INT NOT NULL AUTO_INCREMENT"
+                )
+                mig_conn.commit()
+                logger.info(f"Migration: Restored auto-increment on {table}.{column}")
+            except mysql.connector.Error as err:
+                # Ignore if the table is already valid or the column is missing.
+                if 'does not exist' not in str(err) and 'Duplicate key' not in str(err):
+                    logger.warning(f"Auto-increment migration skipped for {table}.{column}: {err}")
+            finally:
+                mig_conn.close()
+
         # Run Migrations
         ensure_column("users", "is_blocked", "BOOLEAN DEFAULT 0")
         ensure_column("users", "phone", "VARCHAR(50)")
@@ -156,6 +172,10 @@ def init_db():
         ensure_column("documents", "scope", "VARCHAR(50) DEFAULT 'global'")
         ensure_column("documents", "owner_email", "VARCHAR(255)")
         ensure_column("chats", "scope", "VARCHAR(50) DEFAULT 'global'")
+
+        ensure_auto_increment("users")
+        ensure_auto_increment("documents")
+        ensure_auto_increment("chats")
 
         cursor.close()
         conn.close()

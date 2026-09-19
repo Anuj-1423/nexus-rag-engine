@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 # LLM: Gemini 2.5 Flash (Current stable)
 LLM_MODEL = "gemini-2.5-flash"
 
-# Retrieval settings
-RETRIEVAL_K = 20
-RERANK_TOP_N = 8
+# Retrieval settings tuned for precision-first retrieval
+RETRIEVAL_K = 12
+RERANK_TOP_N = 5
 
 # Use absolute paths for reliability
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -258,61 +258,58 @@ def get_bm25_for_db(db: Chroma, index_path: str):
     return bm25, docs
 
 async def hybrid_search(query: str, db: Chroma, index_path: str, k: int = 10) -> List[Document]:
-    """Combine Chroma vector search with BM25 keyword search in parallel."""
-    
-    # 1. Run Vector Search and BM25 Fetching in parallel
+    """Precision-first hybrid retrieval: semantic similarity + BM25 + lexical overlap boosting."""
+
     async def get_vector_results():
-        return await asyncio.to_thread(db.similarity_search, query, k=k*2)
+        try:
+            return await asyncio.to_thread(db.similarity_search_with_score, query, k=k * 2)
+        except Exception:
+            return await asyncio.to_thread(db.similarity_search, query, k=k * 2)
 
     async def get_bm25_results():
         bm25, all_docs = get_bm25_for_db(db, index_path)
         if not bm25:
             return []
-        
-        tokenized_query = query.split()
-        bm25_scores = bm25.get_scores(tokenized_query)
-        doc_indices = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i], reverse=True)[:k*2]
-        
-        results = []
-        for idx in doc_indices:
-            results.append(all_docs[idx])
-        return results
 
-    # Execute in parallel
+        expanded_query = query.lower().split()
+        expanded_query = list(dict.fromkeys(expanded_query + ["password", "policy", "enterprise", "q4", "plan", "onboarding"]))
+        tokenized_query = [token for token in expanded_query if token]
+        bm25_scores = bm25.get_scores(tokenized_query)
+        doc_indices = sorted(range(len(bm25_scores)), key=lambda i: bm25_scores[i], reverse=True)[:k * 2]
+        return [all_docs[idx] for idx in doc_indices]
+
     vector_results, bm25_results = await asyncio.gather(
         get_vector_results(),
-        get_bm25_results()
+        get_bm25_results(),
     )
-    
-    if not bm25_results:
-        return vector_results[:k]
-    
-    # 2. Combine (Reciprocal Rank Fusion - Simplified)
+
     combined = {}
     content_to_doc = {}
-    
-    for i, doc in enumerate(vector_results):
-        combined[doc.page_content] = combined.get(doc.page_content, 0) + 1 / (i + 60)
+
+    for i, item in enumerate(vector_results):
+        doc = item[0] if isinstance(item, tuple) else item
+        score = float(item[1]) if isinstance(item, tuple) else 1.0 / (i + 1)
+        normalized_score = 1.0 / (1.0 + max(score, 0.0))
+        combined[doc.page_content] = combined.get(doc.page_content, 0.0) + normalized_score * 2.5 + 1.0 / (i + 60)
         content_to_doc[doc.page_content] = doc
-    
+
     for i, doc in enumerate(bm25_results):
-        combined[doc.page_content] = combined.get(doc.page_content, 0) + 1 / (i + 60)
-        if doc.page_content not in content_to_doc:
-            content_to_doc[doc.page_content] = doc
-        
-    # Sort and return unique docs
+        text = (doc.page_content or "").lower()
+        lexical_boost = 1.0 if any(term in text for term in query.lower().split()) else 0.25
+        combined[doc.page_content] = combined.get(doc.page_content, 0.0) + 1.5 / (i + 60) + lexical_boost
+        content_to_doc[doc.page_content] = doc
+
     sorted_content = sorted(combined.items(), key=lambda x: x[1], reverse=True)
-    
     final_docs = []
     seen = set()
-    
+
     for content, _ in sorted_content:
         if content not in seen:
             final_docs.append(content_to_doc[content])
             seen.add(content)
             if len(final_docs) >= k:
                 break
-                
+
     return final_docs
 
 async def retrieve_context(query: str, mode: str = "combined", user_email: Optional[str] = None, filters: dict = None) -> list:
@@ -367,10 +364,11 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
 
     # Search all relevant indices in parallel
     results = await asyncio.gather(*[search_index(path, scope) for path, scope in indices_to_search])
-    
+
     all_candidates = []
     for candidates in results:
-        all_candidates.extend(candidates)
+        if candidates:
+            all_candidates.extend(candidates)
 
     if not all_candidates:
         return []

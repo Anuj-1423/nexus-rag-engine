@@ -1,0 +1,44 @@
+{
+  "queries": [
+    {
+      "query": "What is the enterprise password policy?",
+      "mode": "enterprise",
+      "user_email": "demo@example.com",
+      "relevant_files": [
+        "alpha.txt",
+        "security_policy.txt",
+        "device_compliance.txt"
+      ]
+    },
+    {
+      "query": "What was uploaded in Q4?",
+      "mode": "enterprise",
+      "user_email": "demo@example.com",
+      "relevant_files": [
+        "beta.txt",
+        "finance_q4_summary.txt",
+        "budget_report.txt"
+      ]
+    },
+    {
+      "query": "What does the enterprise plan include?",
+      "mode": "enterprise",
+      "user_email": "demo@example.com",
+      "relevant_files": [
+        "gamma.txt",
+        "service_level_agreement.txt",
+        "support_coverage.txt"
+      ]
+    },
+    {
+      "query": "What is included in onboarding?",
+      "mode": "enterprise",
+      "user_email": "demo@example.com",
+      "relevant_files": [
+        "delta.txt",
+        "welcome_checklist.txt",
+        "account_setup_guide.txt"
+      ]
+    }
+  ]
+}
