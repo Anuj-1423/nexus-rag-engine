@@ -6,6 +6,11 @@ venv/
 ENV/
 env/
 .env
+.env.*
+**/.env
+**/.env.*
+backend/.env
+backend/.env.*
 .pytest_cache/
 .vscode/
 .idea/
