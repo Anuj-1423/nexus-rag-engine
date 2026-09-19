@@ -1,11 +1,16 @@
 import os
 import logging
+import time
 from typing import Optional, List
 import hashlib
 
 from google import genai
 from langchain_core.embeddings import Embeddings
 from langchain_chroma import Chroma
+try:
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+except ImportError:
+    HuggingFaceEmbeddings = None
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -85,8 +90,70 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         if not api_key:
             raise ValueError("GOOGLE_API_KEY is missing from environment. Please add it to your .env file.")
         self.client = genai.Client(api_key=api_key)
-        self.model = "models/gemini-embedding-2"
+        self.model_candidates = [
+            "gemini-embedding-001",
+            "gemini-embedding-2",
+            "text-embedding-004",
+        ]
+        self.model = self.model_candidates[0]
         self._llm_model = None
+        self._local_embeddings = None
+
+    def _is_quota_or_rate_limit(self, exc: Exception) -> bool:
+        msg = str(exc).lower()
+        return any(token in msg for token in ["429", "rate limit", "quota", "resource_exhausted", "exceeded your current quota", "too many requests"])
+
+    def _is_model_unavailable(self, exc: Exception) -> bool:
+        msg = str(exc).lower()
+        return any(token in msg for token in ["not found", "404", "not supported for embedcontent", "unsupported", "invalid model"])
+
+    def _fallback_to_local_embeddings(self, contents):
+        if HuggingFaceEmbeddings is None:
+            raise ValueError("Local embedding fallback is unavailable because sentence-transformers is not installed.")
+
+        if self._local_embeddings is None:
+            logger.warning("Google embedding quota exhausted. Falling back to local HuggingFace embeddings.")
+            self._local_embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+        if isinstance(contents, list) and contents and isinstance(contents[0], str):
+            texts = contents
+        else:
+            texts = []
+            for item in contents:
+                if hasattr(item, "parts"):
+                    text_parts = []
+                    for part in item.parts:
+                        if hasattr(part, "text"):
+                            text_parts.append(part.text or "")
+                    texts.append("".join(text_parts))
+                elif isinstance(item, str):
+                    texts.append(item)
+                else:
+                    texts.append(str(item))
+
+        return self._local_embeddings.embed_documents(texts)
+
+    def _embed_with_fallback(self, contents):
+        last_error = None
+        for model_name in self.model_candidates:
+            try:
+                response = self.client.models.embed_content(model=model_name, contents=contents)
+                if not response or not hasattr(response, 'embeddings') or not response.embeddings:
+                    raise ValueError(f"API returned no embeddings for model {model_name}.")
+                self.model = model_name
+                return response
+            except Exception as exc:
+                last_error = exc
+                if self._is_quota_or_rate_limit(exc) or self._is_model_unavailable(exc):
+                    logger.warning(f"Embedding model {model_name} unavailable or rate-limited. Retrying with fallback model. Error: {exc}")
+                    time.sleep(2)
+                    continue
+                raise
+        if last_error and (self._is_quota_or_rate_limit(last_error) or self._is_model_unavailable(last_error)):
+            return self._fallback_to_local_embeddings(contents)
+        if last_error:
+            raise last_error
+        raise ValueError("All embedding models failed.")
 
     def get_llm_model(self):
         """Dynamically find an available Flash model if the default fails."""
@@ -123,26 +190,23 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
                 batch = texts[i : i + batch_size]
                 # Filter out empty strings which can cause API errors
                 batch = [t if t.strip() else "[empty]" for t in batch]
-                
-                # Wrap each string in a Content object to get individual embeddings
-                # Otherwise, the SDK wraps the list into a single Content with multiple Parts
+
                 contents = [
                     genai.types.Content(parts=[genai.types.Part.from_text(text=t)])
                     for t in batch
                 ]
 
-                response = self.client.models.embed_content(
-                    model=self.model,
-                    contents=contents
-                )
-                
-                if not response or not hasattr(response, 'embeddings') or not response.embeddings:
+                response = self._embed_with_fallback(contents)
+
+                if hasattr(response, 'embeddings'):
+                    batch_embeddings = [item.values for item in response.embeddings]
+                else:
+                    batch_embeddings = response
+
+                if not batch_embeddings:
                     logger.error(f"API returned empty embeddings for batch {i//batch_size}")
                     raise ValueError("API returned no embeddings.")
 
-                batch_embeddings = [item.values for item in response.embeddings]
-                
-                # Check if we got the expected number of embeddings
                 if len(batch_embeddings) != len(batch):
                     logger.error(f"Expected {len(batch)} embeddings, got {len(batch_embeddings)}")
                     raise ValueError(f"Batch size mismatch: expected {len(batch)}, got {len(batch_embeddings)}")
@@ -160,15 +224,12 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             return [0.0] * 768
 
         try:
-            # Single string is automatically wrapped by the SDK
-            response = self.client.models.embed_content(
-                model=self.model,
-                contents=text
-            )
-            if not response or not response.embeddings:
-                 raise ValueError("API returned no embeddings for query.")
-                 
-            return response.embeddings[0].values
+            response = self._embed_with_fallback(text)
+            if hasattr(response, 'embeddings'):
+                if not response.embeddings:
+                    raise ValueError("API returned no embeddings for query.")
+                return response.embeddings[0].values
+            return response[0]
         except Exception as e:
             logger.error(f"Single embedding failed: {e}")
             raise

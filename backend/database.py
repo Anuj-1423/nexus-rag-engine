@@ -87,7 +87,7 @@ def init_db():
         # User Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 full_name VARCHAR(255),
                 email VARCHAR(255) UNIQUE,
                 password_hash VARCHAR(255),
@@ -100,7 +100,7 @@ def init_db():
         # Documents Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS documents (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 filename VARCHAR(255),
                 file_type VARCHAR(50),
                 file_size_bytes BIGINT,
@@ -119,7 +119,7 @@ def init_db():
         # Chat History Table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS chats (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id BIGINT AUTO_INCREMENT PRIMARY KEY,
                 email VARCHAR(255),
                 question TEXT,
                 answer TEXT,
@@ -148,18 +148,28 @@ def init_db():
 
         def ensure_auto_increment(table, column='id'):
             mig_conn = get_db_connection(DB_NAME)
+            cursor = mig_conn.cursor()
             try:
-                # This resolves older schemas where the id column exists but is not auto-incrementing.
-                mig_conn.cursor().execute(
-                    f"ALTER TABLE `{table}` MODIFY `{column}` INT NOT NULL AUTO_INCREMENT"
+                cursor.execute(
+                    f"SELECT COALESCE(MAX({column}), 0) + 1 FROM `{table}`"
                 )
+                next_id_row = cursor.fetchone()
+                next_id = next_id_row[0] if next_id_row and next_id_row[0] is not None else 1
+
+                # MySQL can fail if an older schema uses INT and existing values are already close to the limit.
+                # BIGINT is safer and prevents the 'Data truncated for column id' error seen in production.
+                cursor.execute(
+                    f"ALTER TABLE `{table}` MODIFY `{column}` BIGINT NOT NULL AUTO_INCREMENT"
+                )
+                cursor.execute(f"ALTER TABLE `{table}` AUTO_INCREMENT = {next_id}")
                 mig_conn.commit()
-                logger.info(f"Migration: Restored auto-increment on {table}.{column}")
+                logger.info(f"Migration: Restored auto-increment on {table}.{column} starting at {next_id}")
             except mysql.connector.Error as err:
                 # Ignore if the table is already valid or the column is missing.
                 if 'does not exist' not in str(err) and 'Duplicate key' not in str(err):
                     logger.warning(f"Auto-increment migration skipped for {table}.{column}: {err}")
             finally:
+                cursor.close()
                 mig_conn.close()
 
         # Run Migrations

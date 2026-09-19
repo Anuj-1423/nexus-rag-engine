@@ -19,3 +19,4 @@ rank_bm25
 python-dotenv
 cryptography
 gunicorn
+sentence-transformers
