@@ -8,14 +8,12 @@ from google import genai
 from langchain_core.embeddings import Embeddings
 from langchain_chroma import Chroma
 try:
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-except ImportError:
-    HuggingFaceEmbeddings = None
-try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
+
+USE_LOCAL_EMBEDDINGS = os.getenv("USE_LOCAL_EMBEDDINGS", "false").lower() == "true"
 
 from document_parser import extract_document_structure, SUPPORTED_EXTENSIONS
 from chunker import chunk_document, get_chunking_stats
@@ -37,12 +35,14 @@ logger = logging.getLogger(__name__)
 # Configuration: OpenRouter (Free) + Local Embeddings
 # ---------------------------------------------------------------------------
 
-# LLM: Gemini 2.5 Flash (Current stable)
-LLM_MODEL = "gemini-2.5-flash"
+# LLM: Gemini 2.5 Flash Lite (production-safe, lower memory footprint)
+LLM_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 # Retrieval settings tuned for precision-first retrieval
 RETRIEVAL_K = 12
 RERANK_TOP_N = 5
+MAX_QUERY_CACHE_ITEMS = 200
+MAX_BM25_CACHE_ITEMS = 4
 
 # Use absolute paths for reliability
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,17 +52,27 @@ CACHE_PATH = os.path.join(BASE_DIR, "storage", "query_cache.json")
 # Enhancement #8: Query Cache
 _query_cache = {}
 
+
+def trim_query_cache():
+    global _query_cache
+    while len(_query_cache) > MAX_QUERY_CACHE_ITEMS:
+        _query_cache.pop(next(iter(_query_cache)))
+
+
 def load_cache():
     global _query_cache
     if os.path.exists(CACHE_PATH):
         try:
             with open(CACHE_PATH, "r") as f:
                 _query_cache = json.load(f)
-        except:
+            trim_query_cache()
+        except Exception:
             _query_cache = {}
+
 
 def save_cache():
     os.makedirs(os.path.dirname(CACHE_PATH), exist_ok=True)
+    trim_query_cache()
     with open(CACHE_PATH, "w") as f:
         json.dump(_query_cache, f)
 
@@ -92,8 +102,6 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         self.client = genai.Client(api_key=api_key)
         self.model_candidates = [
             "gemini-embedding-001",
-            "gemini-embedding-2",
-            "text-embedding-004",
         ]
         self.model = self.model_candidates[0]
         self._llm_model = None
@@ -108,10 +116,14 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         return any(token in msg for token in ["not found", "404", "not supported for embedcontent", "unsupported", "invalid model"])
 
     def _fallback_to_local_embeddings(self, contents):
-        if HuggingFaceEmbeddings is None:
-            raise ValueError("Local embedding fallback is unavailable because sentence-transformers is not installed.")
+        if not USE_LOCAL_EMBEDDINGS:
+            raise ValueError("Local embedding fallback is disabled in this deployment to preserve memory on Render.")
 
         if self._local_embeddings is None:
+            try:
+                from langchain_community.embeddings import HuggingFaceEmbeddings
+            except ImportError as exc:
+                raise ValueError("Local embedding fallback is unavailable because sentence-transformers is not installed.") from exc
             logger.warning("Google embedding quota exhausted. Falling back to local HuggingFace embeddings.")
             self._local_embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
@@ -161,7 +173,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             return self._llm_model
             
         # Preference order for models
-        preference = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-8b"]
+        preference = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"]
         
         for model_name in preference:
             try:
@@ -173,7 +185,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
                 continue
         
         # Absolute fallback
-        self._llm_model = "gemini-1.5-flash"
+        self._llm_model = "gemini-2.5-flash-lite"
         return self._llm_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
@@ -296,6 +308,9 @@ _bm25_cache = {} # {scope_path: {"bm25": BM25Okapi, "docs": [Document], "timesta
 
 def get_bm25_for_db(db: Chroma, index_path: str):
     global _bm25_cache
+    
+    while len(_bm25_cache) > MAX_BM25_CACHE_ITEMS:
+        _bm25_cache.pop(next(iter(_bm25_cache)))
     
     # Check if index has changed (simplified: check if cache exists)
     if index_path in _bm25_cache:
@@ -537,10 +552,9 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
 
     # Preference order for models to try (Verified from API)
     models_to_try = [
-        "gemini-flash-latest", 
-        "gemini-2.5-flash", 
-        "gemini-2.0-flash", 
-        "gemini-pro-latest"
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash"
     ]
     
     last_error = None
@@ -566,6 +580,7 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
                 
                 # Save to cache
                 _query_cache[cache_key] = result
+                trim_query_cache()
                 await asyncio.to_thread(save_cache)
                 
                 return result
