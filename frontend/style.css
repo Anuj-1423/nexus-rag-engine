@@ -1,108 +1,165 @@
 :root {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --bg-surface: #f8fafc;
+    --primary: #0d5d5a;
+    --primary-hover: #0b4f4b;
+    --bg-surface: #f4f6f3;
     --bg-card: #ffffff;
-    --text-main: #0f172a;
-    --text-muted: #64748b;
-    --border: #e2e8f0;
-    --sidebar-bg: #ffffff;
-    --accent: #8b5cf6;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.5);
+    --bg-panel: #edf3f1;
+    --text-main: #1f2d2b;
+    --text-muted: #62736f;
+    --border: #dfeae6;
+    --sidebar-bg: #fbfdfc;
+    --accent: #b9d2ce;
+    --shadow-soft: 0 12px 32px rgba(13, 93, 90, 0.08);
 }
 
-.dark {
-    --primary: #818cf8;
-    --primary-hover: #6366f1;
-    --bg-surface: #020617;
-    --bg-card: #0f172a;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border: #1e293b;
-    --sidebar-bg: #0f172a;
-    --accent: #a78bfa;
-    --glass-bg: rgba(15, 23, 42, 0.7);
-    --glass-border: rgba(30, 41, 59, 0.5);
+/* Medica editorial system: quiet clinical surfaces, ink colored serif headlines,
+   and teal actions shared by the public pages. */
+:root {
+    --primary: #176f6b;
+    --primary-hover: #105d59;
+    --bg-surface: #f4f7f4;
+    --bg-panel: #edf4f1;
+    --text-main: #172d3b;
+    --text-muted: #637b8d;
+    --border: #dce7e2;
+    --shadow-soft: 0 18px 44px rgba(23, 54, 53, 0.06);
 }
 
 html,
 body {
     max-width: 100%;
-    overflow-x: hidden;
     width: 100%;
     margin: 0;
     padding: 0;
-    background-color: var(--bg-surface);
+    overflow-x: hidden;
+    background: var(--bg-surface);
     color: var(--text-main);
-    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-/* Glassmorphism Utilities */
-.glass {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+/* Public pages use a full-height column so their footer follows the content. */
+body.public-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f4f7f4;
+    color: #172d3b;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+body.public-page main {
+    flex: 1 0 auto;
+}
+
+body.public-page footer {
+    flex-shrink: 0;
+}
+
+body.public-page main h1 {
+    color: #172d3b;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2.8rem, 4vw, 3.8rem);
+    font-weight: 400;
+    letter-spacing: -.045em;
+    line-height: 1.02;
+}
+
+body.public-page main article {
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(30, 55, 48, .045);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+    display: block;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
 }
 
 .card {
-    background-color: var(--bg-card);
+    background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-soft);
 }
 
-.card:hover {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+.glass {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .sidebar {
-    background-color: var(--sidebar-bg);
+    background: var(--sidebar-bg);
     border-right: 1px solid var(--border);
 }
 
 .nav-item {
     color: var(--text-muted);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s ease;
 }
 
 .nav-item:hover {
+    background: rgba(13, 93, 90, 0.05);
     color: var(--primary);
-    background-color: rgba(99, 102, 241, 0.05);
 }
 
 .nav-item.active {
+    background: rgba(13, 93, 90, 0.08);
     color: var(--primary);
-    background-color: rgba(99, 102, 241, 0.1);
     font-weight: 600;
 }
 
-.dark .nav-item.active {
-    background-color: rgba(99, 102, 241, 0.2);
-}
-
 .chat-bubble-user {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
     color: white;
 }
 
 .chat-bubble-ai {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
     color: var(--text-main);
+    border: 1px solid var(--border);
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #2e7d79 100%);
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-/* Toast System */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+    color: white;
+    font-weight: 700;
+    border: none;
+    border-radius: 0.9rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 12px 28px rgba(13, 93, 90, 0.16);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 32px rgba(13, 93, 90, 0.2);
+}
+
 #toast-container {
     position: fixed;
     top: 1.5rem;
@@ -114,21 +171,21 @@ body {
 }
 
 .toast {
-    min-width: 320px;
-    padding: 1rem 1.5rem;
+    min-width: 280px;
+    padding: 0.9rem 1.2rem;
     border-radius: 1rem;
     background: var(--bg-card);
-    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
     display: flex;
     align-items: center;
-    gap: 1rem;
-    border: 1px solid var(--border);
-    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    gap: 0.75rem;
+    animation: slideIn 0.3s ease forwards;
 }
 
 @keyframes slideIn {
     from {
-        transform: translateX(120%);
+        transform: translateX(16px);
         opacity: 0;
     }
 
@@ -150,7 +207,6 @@ body {
     border-left: 4px solid var(--primary);
 }
 
-/* Progress Bar */
 .progress-container {
     height: 8px;
     background: var(--border);
@@ -163,96 +219,27 @@ body {
 .progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #10b981, #34d399);
-    transition: width 0.4s ease;
+    background: linear-gradient(90deg, var(--primary) 0%, #5ea7a0 100%);
+    transition: width 0.35s ease;
 }
 
-/* Mobile Menu Transition */
-#mobile-menu {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-
-#mobile-menu.hidden-menu {
-    transform: translateX(100%);
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-}
-
-/* Form Controls */
 input,
 select,
 textarea {
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     color: var(--text-main);
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
+    outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 4px rgba(13, 93, 90, 0.08);
 }
 
-.dark input:focus,
-.dark select:focus,
-.dark textarea:focus {
-    box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.1);
-}
-
-/* Professional Buttons */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-    color: white;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px -3px rgba(79, 70, 229, 0.3);
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.4);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-/* Mobile Adjustments */
-@media (max-width: 640px) {
-    .card {
-        padding: 1.5rem;
-    }
-
-    h1 {
-        font-size: 1.875rem !important;
-        /* 30px */
-    }
-}
-
-/* Skeleton Loading Animation */
-@keyframes pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: .5;
-    }
-}
-
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Hide scrollbar for clean UI */
 .hide-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -260,4 +247,142 @@ textarea:focus {
 .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+.site-shell {
+    position: relative;
+    min-height: 100vh;
+}
+
+.muted-label {
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.soft-surface {
+    background: var(--bg-panel);
+}
+
+.light-card {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--border);
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.editorial-heading {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    color: #172d3b;
+}
+
+.editorial-label {
+    color: #14726e;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.editorial-card {
+    background: #fff;
+    border: 1px solid #dce7e2;
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(30, 55, 48, .045);
+}
+
+@media (max-width: 640px) {
+    .card {
+        border-radius: 1rem;
+    }
+}
+
+/* Carry the same editorial typography and calm clinical colors into every view. */
+body {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+h1, h2, h3 {
+    color: var(--text-main);
+}
+
+input, select, textarea {
+    border-radius: .65rem;
+}
+
+button, a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sidebar {
+    background: #fff;
+    border-color: var(--border);
+}
+
+body .bg-indigo-600, body .bg-indigo-700, body .bg-blue-600,
+body .bg-purple-600, body .bg-violet-600 {
+    background-color: var(--primary) !important;
+}
+
+body .text-indigo-600, body .text-indigo-700, body .text-blue-600,
+body .text-purple-600, body .text-violet-600 {
+    color: var(--primary) !important;
+}
+
+body .border-indigo-600, body .border-blue-600, body .border-purple-600 {
+    border-color: var(--primary) !important;
+}
+
+body .shadow-indigo-500\/20, body .shadow-blue-500\/20 {
+    --tw-shadow-color: rgba(23, 111, 107, .16) !important;
+}
+
+.btn-primary {
+    background: var(--primary);
+    border-radius: .55rem;
+    box-shadow: none;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 8px 20px rgba(23, 111, 107, .15);
+}
+
+@media (max-width: 640px) {
+    body { overflow-x: hidden; }
+}
+
+.auth-photo-panel {
+    position: relative;
+    width: min(46%, 560px);
+    height: min(72vh, 650px);
+    overflow: hidden;
+    border-radius: 18px;
+    background: #e5efeb;
+}
+
+.auth-photo-panel img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.auth-photo-panel::after {
+    content: "Clinical decisions, made clearer.";
+    position: absolute;
+    inset: auto 0 0;
+    padding: 5rem 2rem 2rem;
+    color: white;
+    font: 2rem Georgia, serif;
+    background: linear-gradient(transparent, rgba(14, 47, 49, .72));
+}
+
+@media (max-width: 900px) {
+    .auth-photo-panel { display: none; }
 }
