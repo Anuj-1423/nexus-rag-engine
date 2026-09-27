@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Medica | Create Account</title>
+    <title>Nexus RAG | Create Account</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -15,53 +15,58 @@
         tailwind.config = { theme: { extend: { colors: { primary: 'var(--primary)', 'primary-hover': 'var(--primary-hover)', 'text-main': 'var(--text-main)', 'text-muted': 'var(--text-muted)', border: 'var(--border)' } } } }
     </script>
 </head>
-<body class="public-page min-h-screen overflow-x-hidden bg-[#f4f7f4] text-text-main">
-    <header class="relative z-50 border-b border-[#dce7e2] bg-white/95 backdrop-blur">
-        <nav class="mx-auto flex h-[78px] max-w-[1680px] items-center justify-between px-6 lg:px-8" aria-label="Main navigation">
-            <a href="index.html" class="flex items-center gap-2.5" aria-label="Medica home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#176f6b] text-lg font-bold text-white">M</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">medica</span></a>
-            <div class="hidden items-center gap-9 text-sm font-medium text-[#41576a] md:flex"><a href="index.html">Home</a><a href="features.html">Services</a><a href="models.html">Our Team</a><a href="insights.html">Insights</a><a href="contact.html">Contact</a><a href="features.html#about">About</a><a href="login.html">Log in</a><a href="register.html" class="rounded-lg bg-[#176f6b] px-5 py-3 font-semibold text-white hover:bg-[#105d59]">Sign up</a></div>
-            <a href="register.html" class="rounded-lg bg-[#176f6b] px-4 py-2.5 text-sm font-semibold text-white md:hidden">Sign up</a>
+<body class="public-page min-h-screen overflow-x-hidden bg-[#f6f9f8] text-text-main">
+    <header class="relative z-50 border-b border-[#dce6e3] bg-white/95 backdrop-blur">
+        <nav class="mx-auto flex h-[78px] max-w-[1680px] items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+            <a href="index.html" class="flex items-center gap-2.5" aria-label="Nexus RAG home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#5b4be8] text-lg font-bold text-white">N</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">Nexus RAG</span></a>
+            <div class="hidden items-center gap-9 text-sm font-medium text-[#41576a] md:flex"><a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a href="register.html" class="rounded-lg bg-[#5b4be8] px-5 py-3 font-semibold text-white hover:bg-[#4636d1]">Get started</a></div>
+            <details class="mobile-site-menu relative md:hidden">
+                <summary aria-label="Open site navigation"><span class="mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span></summary>
+                <div class="mobile-site-menu__panel">
+                    <a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a class="mobile-site-menu__cta" href="register.html">Get started</a>
+                </div>
+            </details>
         </nav>
     </header>
-    <div class="absolute left-[-10%] top-[-10%] h-[32rem] w-[32rem] rounded-full bg-[#dfeae6] blur-[120px]"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] h-[30rem] w-[30rem] rounded-full bg-[#dbe8e5] blur-[120px]"></div>
+    <div class="absolute left-[-10%] top-[-10%] h-[32rem] w-[32rem] rounded-full bg-[#dce6e3] blur-[120px]"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] h-[30rem] w-[30rem] rounded-full bg-[#e7e8ff] blur-[120px]"></div>
 
     <div class="relative mx-auto flex min-h-[calc(100vh-78px)] max-w-7xl items-center justify-between gap-12 p-6 lg:p-10">
-        <div class="auth-photo-panel hidden lg:block"><img src="images/clinical-team-review.jpg" alt="Clinicians reviewing patient information together"></div>
+        <div class="auth-photo-panel hidden lg:block"><img src="images/team-document-review.webp" alt="Professional working at a laptop in an office"></div>
         <div class="relative z-10 w-full max-w-md">
             <div class="mb-8 text-center">
-                <div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[2rem] border border-[#dfeae6] bg-white shadow-[0_18px_40px_rgba(13,93,90,0.12)]">
+                <div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[2rem] border border-[#dce6e3] bg-white shadow-[0_18px_40px_rgba(13,93,90,0.12)]">
                     <span class="text-4xl font-bold text-primary">+</span>
                 </div>
-                <h1 class="text-4xl font-semibold tracking-[-0.05em] text-[#1d2d2c]">Create account</h1>
-                <p class="mt-3 text-base text-[#62736f]">Join the clinical workspace</p>
+                <h1 class="text-4xl font-semibold tracking-[-0.05em] text-[#20312f]">Create account</h1>
+                <p class="mt-3 text-base text-[#60716f]">Create an account for your company knowledge workspace</p>
             </div>
 
-            <div class="rounded-[2rem] border border-[#dfeae6] bg-white p-7 shadow-[0_30px_70px_rgba(13,93,90,0.10)]">
+            <div class="rounded-[2rem] border border-[#dce6e3] bg-white p-7 shadow-[0_30px_70px_rgba(13,93,90,0.10)]">
                 <form id="registerForm" class="space-y-5">
                     <div>
-                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#62736f]">Full name</label>
-                        <input type="text" id="fullname" placeholder="Alex Rivers" required class="w-full rounded-xl border border-[#dfeae6] bg-[#f9fbfa] px-4 py-3 text-base text-[#1d2d2c] placeholder:text-[#8ca29d] focus:border-primary" />
+                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#60716f]">Full name</label>
+                        <input type="text" id="fullname" placeholder="Alex Rivers" required class="w-full rounded-xl border border-[#dce6e3] bg-[#f9fbfa] px-4 py-3 text-base text-[#20312f] placeholder:text-[#8ca29d] focus:border-primary" />
                     </div>
                     <div>
-                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#62736f]">Corporate email</label>
-                        <input type="email" id="email" placeholder="alex@company.com" required class="w-full rounded-xl border border-[#dfeae6] bg-[#f9fbfa] px-4 py-3 text-base text-[#1d2d2c] placeholder:text-[#8ca29d] focus:border-primary" />
+                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#60716f]">Corporate email</label>
+                        <input type="email" id="email" placeholder="alex@company.com" required class="w-full rounded-xl border border-[#dce6e3] bg-[#f9fbfa] px-4 py-3 text-base text-[#20312f] placeholder:text-[#8ca29d] focus:border-primary" />
                     </div>
                     <div>
-                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#62736f]">Role</label>
-                        <select id="role" class="w-full rounded-xl border border-[#dfeae6] bg-[#f9fbfa] px-4 py-3 text-base text-[#1d2d2c] focus:border-primary">
+                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#60716f]">Role</label>
+                        <select id="role" class="w-full rounded-xl border border-[#dce6e3] bg-[#f9fbfa] px-4 py-3 text-base text-[#20312f] focus:border-primary">
                             <option value="employee">Employee</option>
                             <option value="admin">Administrator</option>
                         </select>
                     </div>
                     <div>
-                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#62736f]">Password</label>
-                        <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required class="w-full rounded-xl border border-[#dfeae6] bg-[#f9fbfa] px-4 py-3 text-base text-[#1d2d2c] placeholder:text-[#8ca29d] focus:border-primary" />
+                        <label class="mb-2 block text-[0.72rem] font-bold uppercase tracking-[0.18em] text-[#60716f]">Password</label>
+                        <input type="password" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" required class="w-full rounded-xl border border-[#dce6e3] bg-[#f9fbfa] px-4 py-3 text-base text-[#20312f] placeholder:text-[#8ca29d] focus:border-primary" />
                     </div>
                     <button type="submit" class="btn-primary w-full px-4 py-4 text-base">Create account</button>
                 </form>
 
-                <div class="mt-7 border-t border-[#edf1ef] pt-6 text-center text-sm text-[#62736f]">
+                <div class="mt-7 border-t border-[#edf1ef] pt-6 text-center text-sm text-[#60716f]">
                     Already have an account? <a href="login.html" class="font-semibold text-primary">Sign in</a>
                 </div>
             </div>

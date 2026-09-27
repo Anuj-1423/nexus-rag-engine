@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Medica | Clinical Support</title>
+    <title>Nexus RAG Engine | Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -30,41 +30,42 @@
     </style>
 </head>
 <body class="public-page bg-bg-surface text-text-main antialiased">
-    <header class="fixed inset-x-0 top-0 z-50 border-b border-[#dce7e2] bg-white/95 backdrop-blur">
-        <nav class="mx-auto flex h-[78px] max-w-[1680px] items-center justify-between px-6 lg:px-8" aria-label="Main navigation">
-            <a href="index.html" class="flex items-center gap-2.5" aria-label="Medica home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#176f6b] text-lg font-bold text-white">M</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">medica</span></a>
+    <header class="fixed inset-x-0 top-0 z-50 border-b border-[#dce6e3] bg-white/95 backdrop-blur">
+        <nav class="mx-auto flex h-[78px] max-w-[1680px] items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+            <a href="index.html" class="flex items-center gap-2.5" aria-label="Nexus RAG home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#5b4be8] text-lg font-bold text-white">N</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">Nexus RAG</span></a>
             <div class="hidden items-center gap-9 text-sm font-medium text-[#41576a] md:flex">
-                <a href="index.html">Home</a><a href="features.html" class="text-[#176f6b]">Services</a><a href="models.html">Our Team</a><a href="insights.html">Insights</a><a href="contact.html">Contact</a><a href="features.html#about">About</a><a href="login.html">Log in</a><a href="register.html" class="rounded-lg bg-[#176f6b] px-5 py-3 font-semibold text-white hover:bg-[#105d59]">Sign up</a>
+                <a href="index.html">Home</a><a href="features.html" class="text-[#5b4be8]">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a href="register.html" class="rounded-lg bg-[#5b4be8] px-5 py-3 font-semibold text-white hover:bg-[#4636d1]">Get started</a>
             </div>
-            <a href="register.html" class="rounded-lg bg-[#176f6b] px-4 py-2.5 text-sm font-semibold text-white md:hidden">Sign up</a>
+            <details class="mobile-site-menu relative md:hidden">
+                <summary aria-label="Open site navigation"><span class="mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span></summary>
+                <div class="mobile-site-menu__panel">
+                    <a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a class="mobile-site-menu__cta" href="register.html">Get started</a>
+                </div>
+            </details>
         </nav>
     </header>
     <main class="pt-24">
         <section class="mx-auto max-w-[1680px] px-6 pb-20 pt-16 lg:px-8">
             <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
                 <div>
-                    <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#dfeae6] bg-white/70 px-3 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-primary">
-                        <span class="h-2 w-2 rounded-full bg-primary"></span>
-                        Clinical decision support
-                    </div>
-                    <h1 class="hero-serif text-[3.1rem] leading-[0.95] tracking-[-0.05em] text-[#1d2d2c] md:text-[4.5rem]">Clinical decision support, built for careful review.</h1>
-                    <p class="mt-6 max-w-[560px] text-xl leading-8 text-[#5c716d]">
-                        Explore tools that organize selected patient indicators into reviewable estimates and side-by-side treatment scenarios for clinician-led discussion.
+                    <h1 class="hero-serif text-[3.1rem] leading-[0.95] tracking-[-0.05em] text-[#20312f] md:text-[4.5rem]">Search internal knowledge. Get answers in context.</h1>
+                    <p class="mt-6 max-w-[560px] text-xl leading-8 text-[#60716f]">
+                        Nexus combines document parsing, semantic search, keyword matching, and reranking to surface relevant company knowledge for conversational answers.
                     </p>
                     <div class="mt-8 flex flex-wrap gap-4">
                         <a href="register.html" class="btn-primary px-7 py-4 text-base">See how it works</a>
-                        <a href="#capabilities" class="rounded-xl border border-border bg-white px-7 py-4 text-base font-semibold text-[#1d2d2c]">Explore the platform</a>
+                        <a href="#capabilities" class="rounded-xl border border-border bg-white px-7 py-4 text-base font-semibold text-[#20312f]">Explore the platform</a>
                     </div>
-                    <div class="mt-8 flex items-start gap-3 text-[#556d69]">
-                        <span class="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#ebf3f1] text-[0.7rem] text-primary">i</span>
-                        <p class="max-w-[420px] text-sm leading-6">Decision support for healthcare professionals. Clinical judgment stays with the care team.</p>
+                    <div class="mt-8 flex items-start gap-3 text-[#60716f]">
+                        <span class="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f0f1ff] text-[0.7rem] text-primary">i</span>
+                        <p class="max-w-[420px] text-sm leading-6">Answers use your organization's indexed documents as context. Verify important details against the source.</p>
                     </div>
                 </div>
                 <div class="relative mx-auto w-full max-w-[740px]">
-                    <div class="absolute inset-0 rounded-[2.5rem] bg-[#dfeae6] blur-[80px]"></div>
-                    <div class="relative overflow-hidden rounded-[2.5rem] border border-[#dfeae6] bg-white p-3 shadow-[0_30px_70px_rgba(13,93,90,0.12)]">
+                    <div class="absolute inset-0 rounded-[2.5rem] bg-[#dce6e3] blur-[80px]"></div>
+                    <div class="relative overflow-hidden rounded-[2.5rem] border border-[#dce6e3] bg-white p-3 shadow-[0_30px_70px_rgba(13,93,90,0.12)]">
                         <div class="overflow-hidden rounded-[2rem] bg-[#e8efed]">
-                            <img src="images/clinical-team-review.jpg" alt="Doctor reviewing patient data" class="h-[540px] w-full object-cover" />
+                            <img src="images/team-knowledge-search.webp" alt="IT colleagues collaborating around laptops in an office" class="h-[540px] w-full object-cover" />
                         </div>
 
                     </div>
@@ -72,26 +73,26 @@
             </div>
         </section>
 
-        <section id="about" class="border-y border-[#dce7e2] bg-white/70"><div class="mx-auto max-w-[1680px] px-6 py-20 lg:px-8"><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Platform capabilities</p><h2 class="mt-4 max-w-[760px] font-serif text-4xl leading-tight">A focused set of tools for clinical review.</h2><p class="mt-5 max-w-2xl text-lg leading-8 text-[#5c716d]">Each part of the workflow is designed to make information easier to interpret and discuss, while keeping professional judgment at the center.</p><div class="mt-10 grid gap-6 md:grid-cols-3"><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-chart-line text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Risk estimation</h3><p class="mt-3 leading-7 text-[#5c716d]">Turn selected patient indicators into a structured estimate that can be reviewed with its inputs and context.</p></article><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-code-compare text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Scenario comparison</h3><p class="mt-3 leading-7 text-[#5c716d]">Place selected treatment scenarios alongside one another to make differences easier to examine.</p></article><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-clipboard-check text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Reviewable outputs</h3><p class="mt-3 leading-7 text-[#5c716d]">Present results in a clear format that supports discussion, documentation, and careful follow-up.</p></article></div></div></section>
-        <section class="mx-auto max-w-[1680px] px-6 py-20 lg:px-8"><div class="grid gap-12 lg:grid-cols-2"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">How it fits together</p><h2 class="mt-4 font-serif text-4xl leading-tight">A practical path from input to interpretation.</h2><p class="mt-5 text-lg leading-8 text-[#5c716d]">The workflow makes the steps visible: select information, review the generated estimates, compare scenarios, and bring the results back to a clinician-led discussion.</p></div><ol class="space-y-6"><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eaf2ef] font-bold text-primary">1</span><div><h3 class="font-semibold">Select and check inputs</h3><p class="mt-2 leading-7 text-[#5c716d]">Start with the available patient indicators and confirm they represent the case being reviewed.</p></div></li><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eaf2ef] font-bold text-primary">2</span><div><h3 class="font-semibold">Review the output</h3><p class="mt-2 leading-7 text-[#5c716d]">Read the estimate as one source of information, with its assumptions and limitations in mind.</p></div></li><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eaf2ef] font-bold text-primary">3</span><div><h3 class="font-semibold">Discuss scenarios</h3><p class="mt-2 leading-7 text-[#5c716d]">Use comparisons to support a conversation, not to replace a complete clinical assessment.</p></div></li></ol></div></section>
-        <section class="bg-[#eaf2ef]"><div class="mx-auto grid max-w-[1680px] gap-10 px-6 py-16 lg:grid-cols-[.8fr_1.2fr] lg:px-8"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Built around responsibility</p><h2 class="mt-4 font-serif text-4xl leading-tight">Support for clinicians, with clear boundaries.</h2></div><div class="grid gap-6 sm:grid-cols-2"><div><h3 class="font-semibold">Human judgment stays central</h3><p class="mt-2 leading-7 text-[#5c716d]">Qualified professionals remain responsible for interpretation and care decisions.</p></div><div><h3 class="font-semibold">Context matters</h3><p class="mt-2 leading-7 text-[#5c716d]">An estimate cannot capture every factor that may affect an individual patient.</p></div><div><h3 class="font-semibold">Outputs are estimates</h3><p class="mt-2 leading-7 text-[#5c716d]">Comparisons describe model outputs and should not be read as a promise of an outcome.</p></div><div><h3 class="font-semibold">Review is part of the workflow</h3><p class="mt-2 leading-7 text-[#5c716d]">Check inputs, consider limitations, and bring findings into the wider care discussion.</p></div></div></div></section>
+        <section id="about" class="border-y border-[#dce6e3] bg-white/70"><div class="mx-auto max-w-[1680px] px-6 py-20 lg:px-8"><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Retrieval built for real company knowledge</p><h2 class="mt-4 max-w-[760px] font-serif text-4xl leading-tight">Find the right passage across policies, handbooks, agreements, and technical docs.</h2><p class="mt-5 max-w-2xl text-lg leading-8 text-[#60716f]">Nexus combines complementary retrieval methods so questions can find both exact terms and conceptually related passages.</p><div class="mt-10 grid gap-6 md:grid-cols-3"><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-chart-line text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Hybrid search</h3><p class="mt-3 leading-7 text-[#60716f]">Combine semantic vector retrieval with BM25 keyword search to find policy language, named systems, and related concepts.</p></article><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-code-compare text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Semantic chunking</h3><p class="mt-3 leading-7 text-[#60716f]">Split documents into meaningful sections so retrieved context retains the surrounding policy or agreement detail.</p></article><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-clipboard-check text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Cross-encoder reranking</h3><p class="mt-3 leading-7 text-[#60716f]">Reorder candidate passages by query relevance before they are passed to answer generation.</p></article></div></div></section>
+        <section class="mx-auto max-w-[1680px] px-6 py-20 lg:px-8"><div class="grid gap-12 lg:grid-cols-2"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">From upload to answer</p><h2 class="mt-4 font-serif text-4xl leading-tight">A straightforward workflow for both employees and knowledge managers.</h2><p class="mt-5 text-lg leading-8 text-[#60716f]">Upload supported documents, ask a question in natural language, then inspect the generated response and its retrieved context.</p></div><ol class="space-y-6"><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f1ff] font-bold text-primary">1</span><div><h3 class="font-semibold">Upload documents</h3><p class="mt-2 leading-7 text-[#60716f]">Add shared company knowledge or personal reference files in PDF, DOCX, TXT, or CSV format.</p></div></li><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f1ff] font-bold text-primary">2</span><div><h3 class="font-semibold">Search across collections</h3><p class="mt-2 leading-7 text-[#60716f]">Choose enterprise, personal, or combined retrieval for the right scope of documents.</p></div></li><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f1ff] font-bold text-primary">3</span><div><h3 class="font-semibold">Use answers in context</h3><p class="mt-2 leading-7 text-[#60716f]">Review the answer and supporting passages, and follow the source document when exact wording matters.</p></div></li></ol></div></section>
+        <section class="bg-[#f0f1ff]"><div class="mx-auto grid max-w-[1680px] gap-10 px-6 py-16 lg:grid-cols-[.8fr_1.2fr] lg:px-8"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Knowledge stays organized by scope</p><h2 class="mt-4 font-serif text-4xl leading-tight">Keep shared company content and personal documents distinct.</h2></div><div class="grid gap-6 sm:grid-cols-2"><div><h3 class="font-semibold">Enterprise library</h3><p class="mt-2 leading-7 text-[#60716f]">Administrators manage shared documents that are available to authorized employees.</p></div><div><h3 class="font-semibold">Personal collections</h3><p class="mt-2 leading-7 text-[#60716f]">Employees can add private reference documents to their own searchable workspace.</p></div><div><h3 class="font-semibold">Supported formats</h3><p class="mt-2 leading-7 text-[#60716f]">Index PDF, DOCX, TXT, and CSV files for conversational retrieval.</p></div><div><h3 class="font-semibold">Source-aware review</h3><p class="mt-2 leading-7 text-[#60716f]">Use retrieved passages to verify policy details, agreement language, and procedural steps.</p></div></div></div></section>
     </main>
 
-    <footer class="bg-[#12363a] text-white">
+    <footer class="bg-[#111827] text-white">
         <div class="mx-auto grid max-w-[1680px] gap-10 px-6 py-14 md:grid-cols-4 lg:px-8">
             <div>
                 <div class="mb-5 flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-bold text-[#0d3f3d]">M</div>
-                    <span class="text-2xl font-semibold">medica</span>
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-bold text-[#111827]">N</div>
+                    <span class="text-2xl font-semibold">Nexus RAG</span>
                 </div>
-                <p class="max-w-xs text-white/70">Clinical AI guidance for clearer, safer decisions.</p>
+                <p class="max-w-xs text-white/70">A document-grounded assistant for the knowledge your teams rely on.</p>
             </div>
             <div>
                 <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Quick links</h3>
                 <ul class="space-y-3 text-white/80">
                     <li><a href="index.html">Home</a></li>
-                    <li><a href="features.html">Services</a></li>
-                    <li><a href="models.html">Our Team</a></li>
+                    <li><a href="features.html">Platform</a></li>
+                    <li><a href="models.html">Use cases</a></li>
                     <li><a href="contact.html">Contact</a></li>
                 </ul>
             </div>
@@ -104,12 +105,8 @@
                 </ul>
             </div>
             <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Connect</h3>
-                <div class="flex gap-3 text-lg text-white/80">
-                    <span>in</span>
-                    <span>Instagram</span>
-                    <span>Facebook</span>
-                </div>
+                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Get in touch</h3>
+                <a class="text-white/80 hover:text-white" href="mailto:anujsingh41086@gmail.com">Email Nexus RAG</a>
             </div>
         </div>
     </footer>

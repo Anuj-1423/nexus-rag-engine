@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Enterprise Knowledge Assistant - Dashboard</title>
+<title>Nexus RAG | Dashboard</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -126,7 +126,8 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+      <link rel="stylesheet" href="style.css">
+</head>
 <body class="bg-surface text-on-surface font-body-md antialiased overflow-x-hidden">
 <!-- NavigationDrawer (Shared Component) -->
 <aside class="hidden lg:flex flex-col h-full py-6 w-[280px] h-screen border-r border-slate-200 fixed left-0 top-0 bg-white shadow-sm z-50">
@@ -134,7 +135,7 @@
 <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
 <span class="material-symbols-outlined text-white text-sm" data-icon="auto_awesome">auto_awesome</span>
 </div>
-<span class="text-xl font-bold text-indigo-600">Knowledge Assistant</span>
+<span class="text-xl font-bold text-indigo-600">Nexus RAG</span>
 </div>
 <div class="flex-1 space-y-1">
 <a class="bg-indigo-50 text-indigo-700 border-l-[3px] border-indigo-600 flex items-center px-6 py-3 transition-all font-label-md" href="#">
@@ -160,7 +161,7 @@
 </div>
 <div class="px-6 py-4 mt-auto border-t border-slate-100">
 <div class="flex items-center gap-3">
-<img alt="Alex Sterling" class="w-10 h-10 rounded-full border-2 border-primary/20" data-alt="Close-up professional headshot of a friendly smiling man with short dark hair in a corporate setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwwBMUA4edqqJuS_PMNin-Nv7Xzkz0HlckxhJn9BWHU3M5q5fgI63rK5eiSEnUbMfAPpNvm0JKV02eEe5iTLhjE_fwuXREy36cgknVWNFKVvAPWAdfn-lycZAzXL631HWw1-A3vji25Txh6FwF14Jf4Suc1UoYIAxU74mx2PHkn-INQD-ophu_nC-krTnqmTgq2dl4Zz2X7yiO2z-97IHzmbqazV58AKfw6hnPUw8K44hEvZ5vYtIlh2Kn5E4AwVqnxEcfl4FveNuh"/>
+<span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700" aria-label="User profile">N</span>
 <div class="flex flex-col">
 <span class="text-sm font-bold text-slate-900">Alex Sterling</span>
 <span class="text-xs text-slate-500">Enterprise Admin</span>
@@ -182,7 +183,7 @@
 <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
 </button>
 <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden cursor-pointer active:opacity-70">
-<img alt="Profile Picture" class="w-full h-full object-cover" data-alt="Professional portrait of a male employee for internal system avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxnqjN6rR8oHu6djSvRQ78D_y2IHLZAzMIyzUJytStCQK1SGBXArzNyXMm0uJInrRGASrJSXz3gZLyc6pkEdqsOueMJrRNXyEjTag6rUOaYqmTLTRMD1BZGpb-QweLkmrWR2bXRFlBPm6AddwKCIsKBIJrtaCW2h6r6-2FK9T85t28hKtcrUyqRFUKZszlNTT6yaVKsbr1M_ItdpLBHT7Q25URdTj1-IJi5bPY9jd7yd6EHhmAxPCyAhd3hOF0zYG3_6y4SbdCh1rq"/>
+<span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700" aria-label="User profile">N</span>
 </div>
 </div>
 </header>
@@ -192,7 +193,7 @@
 <header class="flex flex-col md:flex-row md:items-end justify-between gap-4">
 <div>
 <p class="text-primary font-label-md mb-1">Good Morning</p>
-<h2 class="text-display-lg font-display-lg text-on-surface">Welcome back, Anuj 👋</h2>
+<h2 class="text-display-lg font-display-lg text-on-surface">Welcome back, Anuj ðŸ‘‹</h2>
 <p class="text-on-surface-variant font-body-md">Today is Tuesday, 24 October 2023</p>
 </div>
 <div class="flex gap-3">
@@ -309,10 +310,10 @@
 </div>
 <div class="flex-1">
 <div class="flex justify-between items-center mb-1">
-<h4 class="font-label-md text-slate-900">Health insurance provider list</h4>
+<h4 class="font-label-md text-slate-900">Vendor access and support policy</h4>
 <span class="text-caption text-slate-400">Yesterday</span>
 </div>
-<p class="text-body-md text-slate-500 line-clamp-1">"Our current health benefit partners include Bupa and AXA. You can find the full list of dental clinics..."</p>
+<p class="text-body-md text-slate-500 line-clamp-1">"The approved vendors and support contacts are listed in the current procurement policy..."</p>
 </div>
 </div>
 </div>
@@ -369,7 +370,7 @@
 <div class="grid grid-cols-1 gap-4">
 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 group cursor-pointer hover:border-indigo-200 transition-all">
 <div class="w-full h-32 rounded-lg bg-slate-50 overflow-hidden relative">
-<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" data-alt="Modern office desk with open laptop and legal documents with warm afternoon lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFqvoJkSG2oTMcGIDD7bCnOZ2dlwx_N22HHFUlTdgQMfjNKUr693U060W64UKVmetOlI9MCnhHSekb2z0StaA37kACN1cmTySIpfAAyuXGW1C5DePaMXT9QV4yaxLDZG7h4EAEQXmkPMQFnglPIUZU0uFoC5YOyhkYAXLXi208wFW9UOqoiC08Ako33_euJAXyzoRO6RrdAmCY-7mf2QizWMRx-kZBiBtHt_Dugdy-KFD1lrCGcLICs-rWiVB71VObqtv6h4k0tr2F"/>
+<span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700" aria-label="User profile">N</span>
 <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-slate-700">PDF</div>
 </div>
 <div>
@@ -379,7 +380,7 @@
 </div>
 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col gap-3 group cursor-pointer hover:border-indigo-200 transition-all">
 <div class="w-full h-32 rounded-lg bg-slate-50 overflow-hidden relative">
-<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" data-alt="Close-up of calculator and financial spreadsheet documents on a wooden desk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZX5sF-o-bFXNfTKq2xxOpyecoHWZC9ZTdk5lHK7yuMWKm2FqVN-RUzHnQKWVHPhQMExPdl_B90VPtQbACwo45vSVZHjYf60u29mt9r-plqgZ0AKN0W93DJRdsoVaGaG3C5CCN6wnhXoGMd09EDDwGZIsfH-5TkUyvSrdFECbveedPc7_NNMQwAyCTVO3tIN9mB0xUg1HDc7m8P-QbOM46KUe8SIAXMQXHrxTSvQGlGdIKIrpB1DBAqC8HAyzuxfTUkzKrdtUHNrVd"/>
+<span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700" aria-label="User profile">N</span>
 <div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-slate-700">DOCX</div>
 </div>
 <div>

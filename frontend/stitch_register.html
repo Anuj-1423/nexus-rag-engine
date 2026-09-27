@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Register - Knowledge Assistant</title>
+<title>Register - Nexus RAG</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -124,29 +124,30 @@
       min-height: max(884px, 100dvh);
     }
   </style>
-  </head>
+      <link rel="stylesheet" href="style.css">
+</head>
 <body class="bg-surface font-body-md text-on-surface antialiased">
 <div class="flex min-h-screen">
 <!-- Left Side: Interactive Branding/Hero -->
 <div class="hidden lg:flex lg:w-1/2 relative bg-primary items-center justify-center overflow-hidden">
 <div class="absolute inset-0 bg-gradient-to-br from-primary via-surface-tint to-primary-container opacity-90"></div>
 <!-- Abstract background pattern -->
-<div class="absolute inset-0 opacity-20" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA3AeibP8j2ChF-268u5SjZ4nnf9Fc4u6Y2LigDZXMMi8Aa0oFureAlM1N5seXOwZVBeUOImbZ9k59falMrEaIibG61ImAO8evFJ1bfWTy9acs2pKXkZNvvZS2McLcMuZQizpmeEWhmRqguMVnKqiFrvnCL_s5ECD1gmEEXWbpQV8KtnzeZvFdsqZCmCTnjGHdlvyUzUdudqmrN3Xdh-1fDkFcU5iFpd7W7PREqLXn4WiTsgexOBrdCO85Ebh7ElaXgiVWn9WMu3lzU');"></div>
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 70% 20%, rgba(99,102,241,.24), transparent 40%);"></div>
 <div class="relative z-10 px-xl max-w-lg text-white">
 <div class="mb-xl">
 <span class="material-symbols-outlined text-[64px] text-primary-fixed" data-icon="auto_awesome" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
 </div>
 <h1 class="font-display-xl text-display-xl mb-md">Unlock the potential of your organization's collective intelligence.</h1>
-<p class="font-body-lg text-body-lg text-primary-fixed opacity-90 mb-xl">Enterprise Knowledge Assistant helps teams synthesize data, automate documentation, and find answers in seconds.</p>
+<p class="font-body-lg text-body-lg text-primary-fixed opacity-90 mb-xl">Nexus RAG helps teams search policies, agreements, and procedures in one document workspace.</p>
 <!-- Social Proof / Bento Element -->
 <div class="grid grid-cols-2 gap-md">
 <div class="glass-panel p-md rounded-xl border border-white/20">
-<div class="text-display-lg font-display-lg text-white">99%</div>
-<div class="text-label-sm font-label-sm uppercase tracking-wider text-primary-fixed">Accuracy Rate</div>
+<div class="text-display-lg font-display-lg text-white">PDF</div>
+<div class="text-label-sm font-label-sm uppercase tracking-wider text-primary-fixed">Document Search</div>
 </div>
 <div class="glass-panel p-md rounded-xl border border-white/20">
-<div class="text-display-lg font-display-lg text-white">2.4k</div>
-<div class="text-label-sm font-label-sm uppercase tracking-wider text-primary-fixed">Active Enterprises</div>
+<div class="text-display-lg font-display-lg text-white">3</div>
+<div class="text-label-sm font-label-sm uppercase tracking-wider text-primary-fixed">Collection Scopes</div>
 </div>
 </div>
 </div>
@@ -162,11 +163,11 @@
 <div class="p-xs bg-primary-container rounded-lg">
 <span class="material-symbols-outlined text-white" data-icon="auto_awesome">auto_awesome</span>
 </div>
-<span class="font-h2 text-h2 text-primary">Knowledge Assistant</span>
+<span class="font-h2 text-h2 text-primary">Nexus RAG</span>
 </div>
 <div class="mb-xl">
 <h2 class="font-display-lg text-display-lg text-on-surface mb-xs">Create your account</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Start your 14-day free trial with Enterprise Admin features.</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Create an account to search shared and personal company documents.</p>
 </div>
 <form class="space-y-lg">
 <!-- Full Name -->
@@ -205,7 +206,7 @@
 <label class="font-label-md text-label-md text-on-surface" for="password">Password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline" data-icon="lock">lock</span>
-<input class="w-full pl-xl pr-md py-md rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none bg-surface-container-lowest" id="password" placeholder="••••••••" type="password"/>
+<input class="w-full pl-xl pr-md py-md rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none bg-surface-container-lowest" id="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" type="password"/>
 </div>
 <!-- Strength Indicator -->
 <div class="pt-xs">
@@ -223,7 +224,7 @@
 <label class="font-label-md text-label-md text-on-surface" for="confirm_password">Confirm Password</label>
 <div class="relative">
 <span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline" data-icon="lock_reset">lock_reset</span>
-<input class="w-full pl-xl pr-md py-md rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none bg-surface-container-lowest" id="confirm_password" placeholder="••••••••" type="password"/>
+<input class="w-full pl-xl pr-md py-md rounded-lg border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none bg-surface-container-lowest" id="confirm_password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" type="password"/>
 </div>
 </div>
 <!-- Terms & Conditions -->
@@ -242,7 +243,7 @@
 <div class="mt-xl pt-lg border-t border-outline-variant flex flex-col gap-md items-center">
 <p class="text-body-md font-body-md text-on-surface-variant">
                         Already have an account? 
-                        <a class="text-primary font-label-md hover:underline" href="#">Log in</a>
+                        <a class="text-primary font-label-md hover:underline" href="#">Sign in</a>
 </p>
 <div class="flex items-center gap-md w-full">
 <div class="h-[1px] flex-1 bg-outline-variant"></div>
@@ -251,7 +252,7 @@
 </div>
 <div class="grid grid-cols-2 gap-md w-full">
 <button class="flex items-center justify-center gap-sm py-sm px-md border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md">
-<img alt="Google" class="w-4 h-4" data-alt="Google logo icon with clean simple colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxkKodtKZhGrIoSjBd8bMKULnX2Kapw-S_FQxt5gzHtPkq5YZLqUl1iJvVqbxo4M-XWcMLNFyp2562ndr_Xb6q9db-sw-5fpBC9F0FqNcmU8jnLyjVvjTwAttnU4DqyWd1BdyK_r4Lt77z6KjL7scQX4rdgeerIrto8RK7mbpqdV9EGKCihp2YdLRseiqQMGfAO3DQYbzjVsp9H2u7swMdw3gR0n6Orci4mmtW7jZaio7BWXwB1IrtEsAXjyDCutyC8TSAD-Mt_dx0"/>
+<span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 font-semibold text-indigo-700" aria-label="User profile">N</span>
                             Google
                         </button>
 <button class="flex items-center justify-center gap-sm py-sm px-md border border-outline-variant rounded-lg hover:bg-surface-container-low transition-colors font-label-md">

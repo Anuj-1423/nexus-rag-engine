@@ -3,56 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medica Insights | Clinical AI and Decision Support</title>
-    <meta name="description" content="Ideas behind human-centered clinical tools: clear outputs, careful review, and responsible use.">
+    <title>Nexus RAG | Resources</title>
+    <meta name="description" content="Practical guidance for Nexus RAG document search, grounded answers, and knowledge workflows.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script>tailwind.config={theme:{extend:{colors:{primary:'var(--primary)',border:'var(--border)'}}}}</script>
     <style>body{font-family:Inter, sans-serif}.serif{font-family:Georgia,'Times New Roman',serif}</style>
 </head>
-<body class="public-page bg-[#f4f7f4] text-[#172d3b] antialiased">
-    <header class="fixed inset-x-0 top-0 z-50 border-b border-[#dce7e2] bg-white/95 backdrop-blur">
-        <nav class="mx-auto flex h-[78px] max-w-[1680px] items-center justify-between px-6 lg:px-8" aria-label="Main navigation">
-            <a href="index.html" class="flex items-center gap-2.5" aria-label="Medica home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#176f6b] text-lg font-bold text-white">M</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">medica</span></a>
+<body class="public-page bg-[#f6f9f8] text-[#20312f] antialiased">
+    <header class="fixed inset-x-0 top-0 z-50 border-b border-[#dce6e3] bg-white/95 backdrop-blur">
+        <nav class="mx-auto flex h-[78px] max-w-[1680px] items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
+            <a href="index.html" class="flex items-center gap-2.5" aria-label="Nexus RAG home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#5b4be8] text-lg font-bold text-white">N</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">Nexus RAG</span></a>
             <div class="hidden items-center gap-9 text-sm font-medium text-[#41576a] md:flex">
-                <a href="index.html">Home</a><a href="features.html">Services</a><a href="models.html">Our Team</a><a href="insights.html" class="text-[#176f6b]">Insights</a><a href="contact.html">Contact</a><a href="features.html#about">About</a><a href="login.html">Log in</a><a href="register.html" class="rounded-lg bg-[#176f6b] px-5 py-3 font-semibold text-white hover:bg-[#105d59]">Sign up</a>
+                <a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html" class="text-[#5b4be8]">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a href="register.html" class="rounded-lg bg-[#5b4be8] px-5 py-3 font-semibold text-white hover:bg-[#4636d1]">Get started</a>
             </div>
-            <a href="register.html" class="rounded-lg bg-[#176f6b] px-4 py-2.5 text-sm font-semibold text-white md:hidden">Sign up</a>
+            <details class="mobile-site-menu relative md:hidden">
+                <summary aria-label="Open site navigation"><span class="mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span></summary>
+                <div class="mobile-site-menu__panel">
+                    <a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a class="mobile-site-menu__cta" href="register.html">Get started</a>
+                </div>
+            </details>
         </nav>
     </header>
     <main class="mx-auto max-w-[1680px] px-6 pb-20 pt-32 lg:px-8 lg:pt-40">
         <section aria-labelledby="page-title">
-            <p class="editorial-label">Medica insights</p>
-            <h1 id="page-title" class="serif mt-5 max-w-[720px] text-[3.1rem] leading-[1.02] tracking-[-.045em] text-[#172d3b] md:text-[3.8rem]">Notes on clinical AI and<br class="hidden sm:block"> decision support.</h1>
-            <p class="mt-6 max-w-[650px] text-base leading-7 text-[#637b8d]">Explore the ideas behind human-centered clinical tools: clear outputs, careful review, and responsible use.</p>
+            <p class="editorial-label">Nexus RAG resources</p>
+            <h1 id="page-title" class="serif mt-5 max-w-[720px] text-[3.1rem] leading-[1.02] tracking-[-.045em] text-[#20312f] md:text-[3.8rem]">Practical notes on document search and RAG.</h1>
+            <p class="mt-6 max-w-[650px] text-base leading-7 text-[#60716f]">Explore ways to make internal documents easier to search, verify, and use across teams.</p>
         </section>
         <section class="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3" aria-label="Insights articles">
             <article class="editorial-card flex min-h-[286px] flex-col p-7 md:p-[30px]">
-                <p class="text-sm text-[#172d3b]">Clinical workflow</p><h2 class="serif mt-4 text-[1.55rem] leading-tight text-[#172d3b]">Making a risk estimate useful in context</h2>
-                <p class="mt-7 text-sm leading-6 text-[#637b8d]">A model output is one part of a clinical picture. Review the inputs, understand the scope, and interpret estimates alongside the patient's wider context.</p>
-                <a href="index.html" class="mt-auto pt-7 text-sm font-bold text-[#14726e]">Explore the assessment workflow &rarr;</a>
+                <p class="text-sm text-[#20312f]">HR knowledge</p><h2 class="serif mt-4 text-[1.55rem] leading-tight text-[#20312f]">Make HR policies easier to navigate</h2>
+                <p class="mt-7 text-sm leading-6 text-[#60716f]">Bring leave, onboarding, and workplace policies into one searchable collection so employees can ask specific questions in everyday language.</p>
+                <a href="index.html" class="mt-auto pt-7 text-sm font-bold text-[#5148ca]">Explore the platform &rarr;</a>
             </article>
             <article class="editorial-card flex min-h-[286px] flex-col p-7 md:p-[30px]">
-                <p class="text-sm text-[#172d3b]">Responsible AI</p><h2 class="serif mt-4 text-[1.55rem] leading-tight text-[#172d3b]">Keeping clinicians in the decision loop</h2>
-                <p class="mt-7 text-sm leading-6 text-[#637b8d]">Decision support works best when its role is clear: organize information and support discussion while care decisions remain with qualified professionals.</p>
-                <a href="models.html" class="mt-auto pt-7 text-sm font-bold text-[#14726e]">Read about our approach &rarr;</a>
+                <p class="text-sm text-[#20312f]">Agreements</p><h2 class="serif mt-4 text-[1.55rem] leading-tight text-[#20312f]">Find the right clause in shared agreements</h2>
+                <p class="mt-7 text-sm leading-6 text-[#60716f]">Search stakeholder agreements for responsibilities, renewal terms, approval steps, and decisions, then check the original document for exact language.</p>
+                <a href="models.html" class="mt-auto pt-7 text-sm font-bold text-[#5148ca]">Explore use cases &rarr;</a>
             </article>
             <article class="editorial-card flex min-h-[286px] flex-col p-7 md:p-[30px]">
-                <p class="text-sm text-[#172d3b]">Model outputs</p><h2 class="serif mt-4 text-[1.55rem] leading-tight text-[#172d3b]">Why compare scenarios?</h2>
-                <p class="mt-7 text-sm leading-6 text-[#637b8d]">Side-by-side estimates can make assumptions easier to inspect. They should be treated as model outputs, not proof that a treatment causes a particular outcome.</p>
-                <a href="index.html" class="mt-auto pt-7 text-sm font-bold text-[#14726e]">Learn about Medica services &rarr;</a>
+                <p class="text-sm text-[#20312f]">IT and finance</p><h2 class="serif mt-4 text-[1.55rem] leading-tight text-[#20312f]">Turn procedures into searchable answers</h2>
+                <p class="mt-7 text-sm leading-6 text-[#60716f]">Help employees find access guides, finance procedures, reimbursement rules, and technical runbooks without searching through folders manually.</p>
+                <a href="index.html" class="mt-auto pt-7 text-sm font-bold text-[#5148ca]">See how Nexus works &rarr;</a>
             </article>
         </section>
 
-        <section class="mt-16 border-t border-[#dce7e2] pt-16" aria-labelledby="review-guide"><div class="grid gap-10 lg:grid-cols-[.8fr_1.2fr]"><div><p class="editorial-label">A practical guide</p><h2 id="review-guide" class="serif mt-4 text-3xl leading-tight">Questions to bring to every model output.</h2><p class="mt-5 leading-7 text-[#637b8d]">A thoughtful review starts with curiosity about what the result means and where it may fall short.</p></div><div class="grid gap-6 sm:grid-cols-2"><article class="editorial-card p-6"><h3 class="font-semibold">Are the inputs right?</h3><p class="mt-3 text-sm leading-6 text-[#637b8d]">Check that the information used for an assessment is accurate and relevant to the person being considered.</p></article><article class="editorial-card p-6"><h3 class="font-semibold">What is in scope?</h3><p class="mt-3 text-sm leading-6 text-[#637b8d]">Understand what the estimate is intended to describe and what it does not cover.</p></article><article class="editorial-card p-6"><h3 class="font-semibold">What context is missing?</h3><p class="mt-3 text-sm leading-6 text-[#637b8d]">Consider clinical details and patient preferences that may not be represented in the available data.</p></article><article class="editorial-card p-6"><h3 class="font-semibold">How will we follow up?</h3><p class="mt-3 text-sm leading-6 text-[#637b8d]">Use discussion and appropriate follow-up to put any estimate in its proper place.</p></article></div></div></section>
-        <section class="mt-16 rounded-2xl bg-[#eaf2ef] p-8 md:p-12"><div class="max-w-3xl"><p class="editorial-label">Continue exploring</p><h2 class="serif mt-4 text-3xl leading-tight">See how Medica supports review and comparison.</h2><p class="mt-4 leading-7 text-[#637b8d]">Explore the platform workflow, learn about the team behind it, or get in touch with a question.</p><div class="mt-7 flex flex-wrap gap-3"><a href="features.html" class="rounded-lg bg-[#176f6b] px-5 py-3 font-semibold text-white">Explore services</a><a href="contact.html" class="rounded-lg border border-[#c9dbd4] bg-white px-5 py-3 font-semibold text-[#172d3b]">Contact us</a></div></div></section>
+        <section class="mt-16 border-t border-[#dce6e3] pt-16" aria-labelledby="review-guide"><div class="grid gap-10 lg:grid-cols-[.8fr_1.2fr]"><div><p class="editorial-label">RAG field guide</p><h2 id="review-guide" class="serif mt-4 text-3xl leading-tight">Questions to ask of a document-based answer.</h2><p class="mt-5 leading-7 text-[#60716f]">Good retrieval is only part of the workflow. Check document scope, source passages, and update history when an answer matters.</p></div><div class="grid gap-6 sm:grid-cols-2"><article class="editorial-card p-6"><h3 class="font-semibold">Is the right collection connected?</h3><p class="mt-3 text-sm leading-6 text-[#60716f]">Make sure the relevant HR, finance, legal, or IT documents have been uploaded and indexed.</p></article><article class="editorial-card p-6"><h3 class="font-semibold">Which document supports this?</h3><p class="mt-3 text-sm leading-6 text-[#60716f]">Open the cited source and verify the passage, version, and surrounding language.</p></article><article class="editorial-card p-6"><h3 class="font-semibold">Is there a newer policy?</h3><p class="mt-3 text-sm leading-6 text-[#60716f]">Check whether an updated agreement or procedure supersedes the document returned in search.</p></article><article class="editorial-card p-6"><h3 class="font-semibold">Who owns the next step?</h3><p class="mt-3 text-sm leading-6 text-[#60716f]">Use the answer to find the owner or process, then follow the organization's approval workflow.</p></article></div></div></section>
+        <section class="mt-16 rounded-2xl bg-[#f0f1ff] p-8 md:p-12"><div class="max-w-3xl"><p class="editorial-label">Continue exploring</p><h2 class="serif mt-4 text-3xl leading-tight">See how Nexus brings document knowledge into a conversation.</h2><p class="mt-4 leading-7 text-[#60716f]">Explore hybrid search and scoped document collections, or talk with us about your team's workflow.</p><div class="mt-7 flex flex-wrap gap-3"><a href="features.html" class="rounded-lg bg-[#5b4be8] px-5 py-3 font-semibold text-white">Explore the platform</a><a href="contact.html" class="rounded-lg border border-[#c9dbd4] bg-white px-5 py-3 font-semibold text-[#20312f]">Contact us</a></div></div></section>
     </main>
-    <footer class="bg-[#12363a] text-white"><div class="mx-auto grid max-w-[1680px] gap-10 px-6 py-14 md:grid-cols-4 lg:px-8">
-        <div><a href="index.html" class="text-2xl font-semibold">Medica</a><p class="mt-4 max-w-xs text-sm leading-6 text-white/65">Clinical AI guidance for clearer, safer decisions.</p></div>
-        <div><h2 class="text-xs font-bold uppercase tracking-[.16em]">Quick links</h2><ul class="mt-4 space-y-3 text-sm text-white/75"><li><a href="index.html">Home</a></li><li><a href="features.html">Services</a></li><li><a href="models.html">Our Team</a></li><li><a href="insights.html">Insights</a></li></ul></div>
+    <footer class="bg-[#111827] text-white"><div class="mx-auto grid max-w-[1680px] gap-10 px-6 py-14 md:grid-cols-4 lg:px-8">
+        <div><a href="index.html" class="text-2xl font-semibold">Nexus RAG</a><p class="mt-4 max-w-xs text-sm leading-6 text-white/65">A document-grounded assistant for the knowledge your teams rely on.</p></div>
+        <div><h2 class="text-xs font-bold uppercase tracking-[.16em]">Quick links</h2><ul class="mt-4 space-y-3 text-sm text-white/75"><li><a href="index.html">Home</a></li><li><a href="features.html">Platform</a></li><li><a href="models.html">Use cases</a></li><li><a href="insights.html">Resources</a></li></ul></div>
         <div><h2 class="text-xs font-bold uppercase tracking-[.16em]">Contact</h2><p class="mt-4 text-sm leading-6 text-white/75">Anuj Singh<br>anujsingh41086@gmail.com<br>Noida Sector 40, UP</p></div>
-        <div><h2 class="text-xs font-bold uppercase tracking-[.16em]">Connect</h2><p class="mt-4 text-sm text-white/75">Follow Medica</p></div>
+        <div><h2 class="text-xs font-bold uppercase tracking-[.16em]">Connect</h2><p class="mt-4 text-sm text-white/75">Follow Nexus RAG</p></div>
     </div></footer>
 </body>
 </html>

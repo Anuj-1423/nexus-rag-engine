@@ -25,7 +25,7 @@ from sync_docs import sync_document_status
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Enterprise Brain RAG API")
+app = FastAPI(title="Nexus RAG Engine API")
 
 # Add CORS middleware
 app.add_middleware(
