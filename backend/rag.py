@@ -90,6 +90,66 @@ def get_index_path(scope: str = "global", user_email: Optional[str] = None) -> s
     email_hash = hashlib.md5(user_email.lower().encode()).hexdigest()
     return os.path.join(BASE_CHROMA_PATH, "users", email_hash)
 
+
+def is_chroma_cloud_configured() -> bool:
+    cloud_settings = {
+        "CHROMA_API_KEY": os.getenv("CHROMA_API_KEY"),
+        "CHROMA_TENANT": os.getenv("CHROMA_TENANT"),
+        "CHROMA_DATABASE": os.getenv("CHROMA_DATABASE"),
+    }
+    configured = [bool(value) for value in cloud_settings.values()]
+    if any(configured) and not all(configured):
+        missing = [key for key, value in cloud_settings.items() if not value]
+        raise ValueError(f"Chroma Cloud configuration is incomplete. Missing: {', '.join(missing)}")
+    if not any(configured) and os.getenv("VERCEL") == "1":
+        raise ValueError("CHROMA_API_KEY, CHROMA_TENANT, and CHROMA_DATABASE are required on Vercel.")
+    return all(configured)
+
+
+def get_collection_name(scope: str, user_email: Optional[str] = None) -> str:
+    if scope == "global":
+        return "nexus-global"
+    if not user_email:
+        raise ValueError("user_email is required for personal scope")
+    user_hash = hashlib.sha256(user_email.lower().encode()).hexdigest()[:32]
+    return f"nexus-user-{user_hash}"
+
+
+_chroma_cloud_client = None
+
+
+def get_chroma_cloud_client():
+    global _chroma_cloud_client
+    if _chroma_cloud_client is None:
+        import chromadb
+
+        _chroma_cloud_client = chromadb.CloudClient(
+            api_key=os.environ["CHROMA_API_KEY"],
+            tenant=os.environ["CHROMA_TENANT"],
+            database=os.environ["CHROMA_DATABASE"],
+        )
+    return _chroma_cloud_client
+
+
+def get_vector_store(scope: str, user_email: Optional[str], embeddings):
+    if is_chroma_cloud_configured():
+        return Chroma(
+            client=get_chroma_cloud_client(),
+            collection_name=get_collection_name(scope, user_email),
+            embedding_function=embeddings,
+        )
+    return Chroma(
+        persist_directory=get_index_path(scope, user_email),
+        embedding_function=embeddings,
+    )
+
+
+def get_index_identifier(scope: str, user_email: Optional[str] = None) -> str:
+    if is_chroma_cloud_configured():
+        return get_collection_name(scope, user_email)
+    return get_index_path(scope, user_email)
+
+
 # Global cache for embeddings to avoid reloading
 _hf_embeddings = None
 
@@ -259,14 +319,16 @@ def get_embeddings():
 # ---------------------------------------------------------------------------
 
 def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", user_email: Optional[str] = None) -> dict:
-    """Ingest document using Local Embeddings."""
-    index_path = get_index_path(scope, user_email)
+    """Ingest a document with the configured embeddings and vector store."""
+    index_path = get_index_identifier(scope, user_email)
     
     # Invalidate BM25 cache for this scope
     if index_path in _bm25_cache:
         del _bm25_cache[index_path]
-        
-    os.makedirs(os.path.dirname(index_path), exist_ok=True)
+
+    cloud_storage = is_chroma_cloud_configured()
+    if not cloud_storage:
+        os.makedirs(os.path.dirname(index_path), exist_ok=True)
 
     doc_structure = extract_document_structure(file_bytes, filename)
     emb = get_embeddings()
@@ -283,9 +345,16 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
     stats = get_chunking_stats(chunks)
     total_sections = len(doc_structure.sections) if doc_structure.sections else 0
 
-    # Chroma handles persistence automatically. If the directory exists, it loads and appends.
     logger.info(f"Persisting {len(chunks)} chunks to {index_path}...")
-    db = Chroma.from_documents(chunks, emb, persist_directory=index_path)
+    if cloud_storage:
+        db = Chroma.from_documents(
+            chunks,
+            emb,
+            client=get_chroma_cloud_client(),
+            collection_name=get_collection_name(scope, user_email),
+        )
+    else:
+        db = Chroma.from_documents(chunks, emb, persist_directory=index_path)
     
     # Verify persistence
     saved_count = len(db.get()['ids'])
@@ -392,35 +461,36 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
     """Enhanced retrieval with explicit support for Enterprise, Personal, and Combined modes."""
     
     indices_to_search = []
+    cloud_storage = is_chroma_cloud_configured()
     
     # 1. ENTERPRISE Mode: Only Global Admin Documents
     if mode == "enterprise":
-        global_path = get_index_path("global")
-        if os.path.exists(global_path):
+        global_path = get_index_identifier("global")
+        if cloud_storage or os.path.exists(global_path):
             indices_to_search.append((global_path, "global"))
 
     # 2. PERSONAL Mode: Only User's Private Documents
     elif mode == "personal":
         if user_email:
-            personal_path = get_index_path("personal", user_email)
-            if os.path.exists(personal_path):
+            personal_path = get_index_identifier("personal", user_email)
+            if cloud_storage or os.path.exists(personal_path):
                 indices_to_search.append((personal_path, "personal"))
 
     # 3. COMBINED Mode: Both Global and Personal (Default)
     else: # combined
-        global_path = get_index_path("global")
-        if os.path.exists(global_path):
+        global_path = get_index_identifier("global")
+        if cloud_storage or os.path.exists(global_path):
             indices_to_search.append((global_path, "global"))
             
         if user_email:
-            personal_path = get_index_path("personal", user_email)
-            if os.path.exists(personal_path):
+            personal_path = get_index_identifier("personal", user_email)
+            if cloud_storage or os.path.exists(personal_path):
                 indices_to_search.append((personal_path, "personal"))
 
     if not indices_to_search:
         # Avoid NameError by ensuring paths are defined
-        g_path = get_index_path("global")
-        p_path = get_index_path("personal", user_email) if user_email else "N/A"
+        g_path = get_index_identifier("global")
+        p_path = get_index_identifier("personal", user_email) if user_email else "N/A"
         logger.warning(f"No search indices found for mode={mode}, email={user_email}. Search paths checked: {g_path}, {p_path}")
         return []
 
@@ -428,7 +498,7 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
     
     async def search_index(path, scope):
         try:
-            db = await asyncio.to_thread(Chroma, persist_directory=path, embedding_function=emb)
+            db = await asyncio.to_thread(get_vector_store, scope, user_email, emb)
             candidates = await hybrid_search(query, db, path, k=RETRIEVAL_K)
             
             if filters:
@@ -610,18 +680,18 @@ def ingest_text(text: str, meta: dict):
 
 def delete_document_from_vector(filename: str, scope: str = "global", user_email: Optional[str] = None) -> bool:
     """Delete all chunks associated with a specific filename from ChromaDB."""
-    index_path = get_index_path(scope, user_email)
+    index_path = get_index_identifier(scope, user_email)
     
     # Invalidate BM25 cache for this scope
     if index_path in _bm25_cache:
         del _bm25_cache[index_path]
         
-    if not os.path.exists(index_path):
+    if not is_chroma_cloud_configured() and not os.path.exists(index_path):
         logger.warning(f"Cannot delete {filename}: Index path {index_path} does not exist.")
         return False
         
     emb = get_embeddings()
-    db = Chroma(persist_directory=index_path, embedding_function=emb)
+    db = get_vector_store(scope, user_email, emb)
     
     try:
         # We need to get the ids of documents with this filename
@@ -638,3 +708,13 @@ def delete_document_from_vector(filename: str, scope: str = "global", user_email
     except Exception as e:
         logger.error(f"Failed to delete '{filename}' from ChromaDB: {e}")
         return False
+
+
+def vector_document_exists(filename: str, scope: str, user_email: Optional[str] = None) -> bool:
+    if not is_chroma_cloud_configured():
+        index_path = get_index_path(scope, user_email)
+        if not os.path.exists(index_path):
+            return False
+
+    db = get_vector_store(scope, user_email, get_embeddings())
+    return bool(db.get(where={"filename": filename}, limit=1).get("ids"))

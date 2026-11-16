@@ -40,6 +40,22 @@ uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 The backend serves the frontend as well. Open <http://127.0.0.1:8000/> for the website, or <http://127.0.0.1:8000/docs> for the API documentation.
 
+## Deploy on Vercel
+
+Set the Vercel project **Root Directory** to the repository root (`.`), not `backend`. The root `pyproject.toml` points Vercel to the FastAPI app, and the root `requirements.txt` includes the backend dependencies. Leave the Build Command at its default; do not add another `backend/` prefix.
+
+Configure these Vercel environment variables:
+
+- `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT`
+- `GOOGLE_API_KEY`
+- `JWT_SECRET` (use a private random value)
+- `CHROMA_API_KEY`, `CHROMA_TENANT`, and `CHROMA_DATABASE`
+- `COHERE_API_KEY` (optional)
+
+Create the Chroma Cloud database and set its API key, tenant, and database name in Vercel before deploying. Local development continues to use the persistent Chroma directory when Chroma Cloud variables are not configured. Vercel deployments use Chroma Cloud because serverless local files are not durable. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
+
+Existing local Chroma indexes are not copied to Chroma Cloud automatically; re-upload or migrate those documents. Profile photos written by the current profile endpoint use temporary serverless storage on Vercel and are not durable across function instances.
+
 ## Supported uploads
 
 PDF, DOCX, TXT, and CSV documents are supported.

@@ -3,12 +3,17 @@ import mysql.connector
 import logging
 import shutil
 import asyncio
+import sys
 from typing import List, Optional
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Response, Header, Depends
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 # Load environment variables
 try:
@@ -26,6 +31,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Enterprise Brain RAG API")
+RUNTIME_STORAGE_DIR = (
+    os.path.join("/tmp", "nexus-rag")
+    if os.getenv("VERCEL") == "1"
+    else os.path.join(BACKEND_DIR, "storage")
+)
+PROFILE_STORAGE_DIR = os.path.join(RUNTIME_STORAGE_DIR, "profiles")
 
 # Add CORS middleware
 app.add_middleware(
@@ -41,11 +52,11 @@ def health_check():
     return {"status": "healthy"}
 
 # Ensure directories exist
-os.makedirs("temp_uploads", exist_ok=True)
-os.makedirs("storage/vectors", exist_ok=True)
-os.makedirs("storage/profiles", exist_ok=True)
+os.makedirs(os.path.join(RUNTIME_STORAGE_DIR, "temp_uploads"), exist_ok=True)
+os.makedirs(os.path.join(RUNTIME_STORAGE_DIR, "vectors"), exist_ok=True)
+os.makedirs(PROFILE_STORAGE_DIR, exist_ok=True)
 
-app.mount("/profiles", StaticFiles(directory="storage/profiles"), name="profiles")
+app.mount("/profiles", StaticFiles(directory=PROFILE_STORAGE_DIR), name="profiles")
 
 @app.on_event("startup")
 def startup_event():
@@ -58,6 +69,8 @@ def startup_event():
         sync_document_status()
     except Exception as e:
         logger.error(f"FATAL: Database initialization failed: {e}")
+        if os.getenv("VERCEL") == "1":
+            raise
         # We don't raise here so the server can at least start and show a health check,
         # but the app won't work until DB is fixed.
 
@@ -193,7 +206,7 @@ async def update_profile(
     try:
         if profile_pic and profile_pic.filename:
             pic_filename = f"{email.replace('@', '_').replace('.', '_')}_{profile_pic.filename}"
-            pic_path = os.path.join("storage/profiles", pic_filename)
+            pic_path = os.path.join(PROFILE_STORAGE_DIR, pic_filename)
             with open(pic_path, "wb") as buffer:
                 shutil.copyfileobj(profile_pic.file, buffer)
             

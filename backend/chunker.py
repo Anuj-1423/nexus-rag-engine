@@ -7,7 +7,6 @@ Advanced chunking strategies including Semantic Chunking and Recursive Character
 import logging
 from typing import List, Optional
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_experimental.text_splitter import SemanticChunker
 from langchain_core.documents import Document
 
 from document_parser import DocumentStructure
@@ -42,13 +41,22 @@ def chunk_document(doc_structure: DocumentStructure, embeddings=None) -> List[Do
     Semantic or Recursive chunking.
     """
     
+    semantic_splitter = None
     if CHUNKING_STRATEGY == "semantic" and embeddings:
+        try:
+            from langchain_experimental.text_splitter import SemanticChunker
+
+            semantic_splitter = SemanticChunker(
+                embeddings,
+                breakpoint_threshold_type=BREAKPOINT_THRESHOLD_TYPE,
+                breakpoint_threshold_amount=BREAKPOINT_THRESHOLD_VALUE,
+            )
+        except ImportError:
+            logger.info("Semantic chunking dependency is not installed; using recursive chunking.")
+
+    if semantic_splitter:
+        splitter = semantic_splitter
         logger.info(f"Using Semantic Chunking (Threshold: {BREAKPOINT_THRESHOLD_VALUE} {BREAKPOINT_THRESHOLD_TYPE})")
-        splitter = SemanticChunker(
-            embeddings,
-            breakpoint_threshold_type=BREAKPOINT_THRESHOLD_TYPE,
-            breakpoint_threshold_amount=BREAKPOINT_THRESHOLD_VALUE
-        )
     else:
         logger.info(f"Using Recursive Character Chunking (Size: {CHUNK_SIZE})")
         splitter = RecursiveCharacterTextSplitter(
