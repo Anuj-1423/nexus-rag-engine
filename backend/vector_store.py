@@ -45,7 +45,14 @@ class QdrantVectorStore:
             timeout=30,
             **kwargs,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as error:
+            detail = response.text[:1000]
+            raise requests.HTTPError(
+                f"{error}. Qdrant response: {detail}",
+                response=response,
+            ) from error
         return response.json()
 
     def _connect_local(self) -> sqlite3.Connection:
@@ -92,6 +99,41 @@ class QdrantVectorStore:
             return False
         response.raise_for_status()
         return True
+
+    def get_vector_size(self) -> int:
+        if not self.url:
+            raise ValueError("Vector dimensions are only available from Qdrant Cloud collections.")
+        collection = self._request("GET", self._collection_url).get("result") or {}
+        vectors = (collection.get("config") or {}).get("params", {}).get("vectors")
+        if not isinstance(vectors, dict) or not isinstance(vectors.get("size"), int):
+            raise ValueError(
+                f"Collection '{self.collection_name}' must use a single unnamed vector."
+            )
+        return vectors["size"]
+
+    def _ensure_payload_indexes(self, where: Optional[dict]) -> None:
+        if not self.url or not where:
+            return
+
+        collection = self._request("GET", self._collection_url).get("result") or {}
+        payload_schema = collection.get("payload_schema") or {}
+        for key in where:
+            field_name = f"metadata.{key}"
+            if field_name in payload_schema:
+                continue
+            try:
+                self._request(
+                    "PUT",
+                    f"{self._collection_url}/index",
+                    params={"wait": "true"},
+                    json={"field_name": field_name, "field_schema": "keyword"},
+                )
+            except requests.HTTPError as error:
+                if error.response is None or error.response.status_code != 409:
+                    raise
+                refreshed = self._request("GET", self._collection_url).get("result") or {}
+                if field_name not in (refreshed.get("payload_schema") or {}):
+                    raise
 
     def _ensure_collection(self, vector_size: int) -> None:
         if not self.url:
@@ -189,6 +231,7 @@ class QdrantVectorStore:
     def get(self, where: Optional[dict] = None, limit: Optional[int] = None) -> dict:
         if not self.collection_exists() or limit == 0:
             return {"ids": [], "documents": [], "metadatas": []}
+        self._ensure_payload_indexes(where)
 
         ids = []
         documents = []
@@ -329,6 +372,7 @@ class QdrantVectorStore:
         if not self.collection_exists():
             return
         if self.url:
+            self._ensure_payload_indexes(where)
             self._request(
                 "POST",
                 f"{self._collection_url}/points/delete",

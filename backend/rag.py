@@ -129,7 +129,7 @@ def get_collection_name(scope: str, user_email: Optional[str] = None) -> str:
 
 def get_vector_store(scope: str, user_email: Optional[str], embeddings) -> QdrantVectorStore:
     use_cloud = is_qdrant_cloud_configured()
-    return QdrantVectorStore(
+    store = QdrantVectorStore(
         collection_name=get_collection_name(scope, user_email),
         embedding_function=embeddings,
         url=os.getenv("QDRANT_URL") if use_cloud else None,
@@ -140,6 +140,10 @@ def get_vector_store(scope: str, user_email: Optional[str], embeddings) -> Qdran
             else None
         ),
     )
+    if use_cloud and store.collection_exists() and isinstance(embeddings, GoogleAIEmbeddingsOfficial):
+        dimensions = store.get_vector_size()
+        store.embedding_function = DimensionedEmbeddings(embeddings, dimensions)
+    return store
 
 
 def get_index_identifier(scope: str, user_email: Optional[str] = None) -> str:
@@ -201,11 +205,16 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
 
         return self._local_embeddings.embed_documents(texts)
 
-    def _embed_with_fallback(self, contents):
+    def _embed_with_fallback(self, contents, output_dimensionality=None):
         last_error = None
         for model_name in self.model_candidates:
             try:
-                response = self.client.models.embed_content(model=model_name, contents=contents)
+                request = {"model": model_name, "contents": contents}
+                if output_dimensionality is not None:
+                    request["config"] = genai.types.EmbedContentConfig(
+                        output_dimensionality=output_dimensionality
+                    )
+                response = self.client.models.embed_content(**request)
                 if not response or not hasattr(response, 'embeddings') or not response.embeddings:
                     raise ValueError(f"API returned no embeddings for model {model_name}.")
                 self.model = model_name
@@ -244,7 +253,11 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         self._llm_model = LLM_MODEL
         return self._llm_model
 
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+    def embed_documents(
+        self,
+        texts: List[str],
+        output_dimensionality: Optional[int] = None,
+    ) -> List[List[float]]:
         """Embed a list of documents with batching to avoid API limits."""
         if not texts:
             return []
@@ -264,7 +277,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
                     for t in batch
                 ]
 
-                response = self._embed_with_fallback(contents)
+                response = self._embed_with_fallback(contents, output_dimensionality)
 
                 if hasattr(response, 'embeddings'):
                     batch_embeddings = [item.values for item in response.embeddings]
@@ -286,13 +299,17 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             logger.error(f"Embedding failed: {e}")
             raise
 
-    def embed_query(self, text: str) -> List[float]:
+    def embed_query(
+        self,
+        text: str,
+        output_dimensionality: Optional[int] = None,
+    ) -> List[float]:
         """Embed a single query."""
         if not text or not text.strip():
-            return [0.0] * 768
+            return [0.0] * (output_dimensionality or 3072)
 
         try:
-            response = self._embed_with_fallback(text)
+            response = self._embed_with_fallback(text, output_dimensionality)
             if hasattr(response, 'embeddings'):
                 if not response.embeddings:
                     raise ValueError("API returned no embeddings for query.")
@@ -301,6 +318,25 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
         except Exception as e:
             logger.error(f"Single embedding failed: {e}")
             raise
+
+
+class DimensionedEmbeddings(Embeddings):
+    def __init__(self, embeddings: GoogleAIEmbeddingsOfficial, dimensions: int):
+        self.embeddings = embeddings
+        self.dimensions = dimensions
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return self.embeddings.embed_documents(
+            texts,
+            output_dimensionality=self.dimensions,
+        )
+
+    def embed_query(self, text: str) -> List[float]:
+        return self.embeddings.embed_query(
+            text,
+            output_dimensionality=self.dimensions,
+        )
+
 
 def get_embeddings():
     """Get the official Google AI Embeddings wrapper."""

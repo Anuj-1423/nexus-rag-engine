@@ -103,6 +103,37 @@ class GeminiModelFallbackTests(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(runtime_dir.replace("\\", "/"), "/tmp/nexus-rag")
 
+    def test_embedding_api_receives_existing_collection_dimensions(self):
+        requests = []
+        response = SimpleNamespace(
+            embeddings=[SimpleNamespace(values=[0.1] * 256)]
+        )
+        models = SimpleNamespace(
+            embed_content=lambda **kwargs: requests.append(kwargs) or response
+        )
+        with (
+            patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}),
+            patch.object(rag.genai, "Client", return_value=SimpleNamespace(models=models)),
+        ):
+            embeddings = rag.GoogleAIEmbeddingsOfficial()
+            response = embeddings._embed_with_fallback("dimension test", 256)
+
+        self.assertEqual(len(response.embeddings[0].values), 256)
+        self.assertEqual(requests[0]["config"].output_dimensionality, 256)
+
+    def test_dimensioned_embeddings_forwards_collection_size(self):
+        base_embeddings = SimpleNamespace()
+        base_embeddings.embed_documents = lambda texts, output_dimensionality: [
+            [0.1] * output_dimensionality for _ in texts
+        ]
+        base_embeddings.embed_query = lambda text, output_dimensionality: [
+            0.1
+        ] * output_dimensionality
+        embeddings = rag.DimensionedEmbeddings(base_embeddings, 256)
+
+        self.assertEqual(len(embeddings.embed_documents(["text"])[0]), 256)
+        self.assertEqual(len(embeddings.embed_query("query")), 256)
+
 
 if __name__ == "__main__":
     unittest.main()

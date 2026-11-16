@@ -85,7 +85,17 @@ class QdrantVectorStoreTests(unittest.TestCase):
             }
         }
         with patch.object(store, "collection_exists", return_value=True), patch.object(
-            store, "_request", side_effect=[{}, response, {"result": {"count": 1}}, {}, {}]
+            store,
+            "_request",
+            side_effect=[
+                {},
+                response,
+                {"result": {"count": 1}},
+                {},
+                {"result": {"payload_schema": {}}},
+                {},
+                {},
+            ],
         ) as request:
             store.add_documents([
                 Document(page_content="alpha document", metadata={"filename": "a.txt"})
@@ -103,7 +113,11 @@ class QdrantVectorStoreTests(unittest.TestCase):
         self.assertEqual(calls[2].args[:2], ("POST", "/collections/nexus-global/points/count"))
         self.assertEqual(calls[3].kwargs["json"], {"points": ["point-1"]})
         self.assertEqual(
-            calls[4].kwargs["json"],
+            calls[5].kwargs["json"],
+            {"field_name": "metadata.filename", "field_schema": "keyword"},
+        )
+        self.assertEqual(
+            calls[6].kwargs["json"],
             {
                 "filter": {
                     "must": [
@@ -114,6 +128,47 @@ class QdrantVectorStoreTests(unittest.TestCase):
                     ]
                 }
             },
+        )
+
+    def test_filtered_cloud_reads_create_required_payload_index(self):
+        store = QdrantVectorStore(
+            collection_name="nexus-global",
+            embedding_function=StubEmbeddings(),
+            url="https://qdrant.example",
+            api_key="test-key",
+        )
+        with patch.object(store, "collection_exists", return_value=True), patch.object(
+            store,
+            "_request",
+            side_effect=[
+                {"result": {"payload_schema": {}}},
+                {"result": {}},
+                {
+                    "result": {
+                        "points": [
+                            {
+                                "id": "point-1",
+                                "payload": {
+                                    "page_content": "alpha document",
+                                    "metadata": {"filename": "a.txt"},
+                                },
+                            }
+                        ],
+                        "next_page_offset": None,
+                    }
+                },
+            ],
+        ) as request:
+            result = store.get(where={"filename": "a.txt"}, limit=1)
+
+        self.assertEqual(result["ids"], ["point-1"])
+        self.assertEqual(
+            [call.args[:2] for call in request.call_args_list],
+            [
+                ("GET", "/collections/nexus-global"),
+                ("PUT", "/collections/nexus-global/index"),
+                ("POST", "/collections/nexus-global/points/scroll"),
+            ],
         )
 
 
