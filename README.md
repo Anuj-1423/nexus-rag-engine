@@ -21,6 +21,7 @@ DB_PASSWORD=
 DB_NAME=defaultdb
 DB_PORT=3306
 GOOGLE_API_KEY=your-google-ai-api-key
+GEMINI_MODEL=gemini-3.8-flash
 COHERE_API_KEY=
 JWT_SECRET=replace-with-a-private-random-secret
 QDRANT_URL=https://your-cluster-id.region.cloud.qdrant.io:6333
@@ -51,6 +52,7 @@ Configure these Vercel environment variables:
 
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT`
 - `GOOGLE_API_KEY`
+- `GEMINI_MODEL` (optional; defaults to `gemini-3.8-flash`)
 - `JWT_SECRET` (use a private random value)
 - `QDRANT_URL` and `QDRANT_API_KEY`
 - `COHERE_API_KEY` (optional)

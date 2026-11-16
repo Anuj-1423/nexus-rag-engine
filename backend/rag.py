@@ -36,8 +36,13 @@ logger = logging.getLogger(__name__)
 # Configuration: OpenRouter (Free) + Local Embeddings
 # ---------------------------------------------------------------------------
 
-# LLM: Gemini 2.5 Flash Lite (production-safe, lower memory footprint)
-LLM_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
+# LLM: Gemini 3.8 Flash
+LLM_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+GENERATION_MODELS = tuple(dict.fromkeys([
+    LLM_MODEL,
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+]))
 
 # Retrieval settings tuned for precision-first retrieval
 RETRIEVAL_K = 12
@@ -217,7 +222,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             return self._llm_model
             
         # Preference order for models
-        preference = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash"]
+        preference = GENERATION_MODELS
         
         for model_name in preference:
             try:
@@ -229,7 +234,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
                 continue
         
         # Absolute fallback
-        self._llm_model = "gemini-2.5-flash-lite"
+        self._llm_model = LLM_MODEL
         return self._llm_model
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:
@@ -646,15 +651,8 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
 
     system_prompt += "\n\nContext Documents (Use ONLY relevant parts):\n" + context_str
 
-    # Preference order for models to try (Verified from API)
-    models_to_try = [
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash"
-    ]
-    
     last_error = None
-    for active_model in models_to_try:
+    for active_model in GENERATION_MODELS:
         max_retries = 2 # Per model
         for attempt in range(max_retries):
             try:
