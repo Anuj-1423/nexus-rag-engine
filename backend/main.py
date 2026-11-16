@@ -499,7 +499,7 @@ def delete_doc(email: str, filename: str, scope: str = "global", current_user: d
             cursor.execute("DELETE FROM documents WHERE filename = %s AND owner_email = %s AND scope = 'personal'", (filename, email))
         conn.commit()
         
-        # 2. Delete from ChromaDB Vector Store
+        # 2. Delete from the vector store
         vector_success = delete_document_from_vector(filename, scope, email)
         
         if vector_success:

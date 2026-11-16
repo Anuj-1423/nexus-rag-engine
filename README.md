@@ -7,6 +7,7 @@ Nexus is a document-based knowledge assistant. It indexes uploaded files and ans
 - Python 3.10 or later
 - MySQL
 - A Google AI API key for embeddings and answer generation
+- A Qdrant Cloud cluster and API key for persistent hosted vector storage
 - A Cohere API key is optional; retrieval uses a local reranking fallback when it is not configured
 
 ## Configuration
@@ -22,6 +23,8 @@ DB_PORT=3306
 GOOGLE_API_KEY=your-google-ai-api-key
 COHERE_API_KEY=
 JWT_SECRET=replace-with-a-private-random-secret
+QDRANT_URL=https://your-cluster-id.region.cloud.qdrant.io:6333
+QDRANT_API_KEY=your-qdrant-api-key
 ```
 
 The application initializes its database and tables when the backend starts. Use credentials that have permission to connect to MySQL and create the configured database, or create it beforehand.
@@ -49,12 +52,12 @@ Configure these Vercel environment variables:
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT`
 - `GOOGLE_API_KEY`
 - `JWT_SECRET` (use a private random value)
-- `CHROMA_API_KEY`, `CHROMA_TENANT`, and `CHROMA_DATABASE`
+- `QDRANT_URL` and `QDRANT_API_KEY`
 - `COHERE_API_KEY` (optional)
 
-Create the Chroma Cloud database and set its API key, tenant, and database name in Vercel before deploying. Local development continues to use the persistent Chroma directory when Chroma Cloud variables are not configured. Vercel deployments use Chroma Cloud because serverless local files are not durable. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
+Create a Qdrant Cloud free-tier cluster and add its cluster URL and API key in Vercel before deploying. Local development uses an on-disk Qdrant database when Qdrant Cloud variables are not configured. Vercel deployments use Qdrant Cloud because serverless local files are not durable. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
 
-Existing local Chroma indexes are not copied to Chroma Cloud automatically; re-upload or migrate those documents. Profile photos written by the current profile endpoint use temporary serverless storage on Vercel and are not durable across function instances.
+Existing local Chroma indexes are not copied to Qdrant automatically; re-upload or migrate those documents. Profile photos written by the current profile endpoint use temporary serverless storage on Vercel and are not durable across function instances.
 
 ## Supported uploads
 

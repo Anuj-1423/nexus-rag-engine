@@ -6,7 +6,6 @@ import hashlib
 
 from google import genai
 from langchain_core.embeddings import Embeddings
-from langchain_chroma import Chroma
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -23,6 +22,7 @@ import json
 from langchain_core.documents import Document
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from vector_store import QdrantVectorStore
 
 # Reuse executor for CPU-bound tasks
 _executor = ThreadPoolExecutor(max_workers=4)
@@ -46,7 +46,7 @@ MAX_BM25_CACHE_ITEMS = 4
 
 # Use absolute paths for reliability
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_CHROMA_PATH = os.path.join(BASE_DIR, "storage", "chroma")
+BASE_QDRANT_PATH = os.path.join(BASE_DIR, "storage", "qdrant")
 CACHE_PATH = os.path.join(BASE_DIR, "storage", "query_cache.json")
 
 # Enhancement #8: Query Cache
@@ -84,25 +84,24 @@ load_cache()
 
 def get_index_path(scope: str = "global", user_email: Optional[str] = None) -> str:
     if scope == "global":
-        return os.path.join(BASE_CHROMA_PATH, "global")
+        return os.path.join(BASE_QDRANT_PATH, "global")
     if not user_email:
         raise ValueError("user_email is required for personal scope")
     email_hash = hashlib.md5(user_email.lower().encode()).hexdigest()
-    return os.path.join(BASE_CHROMA_PATH, "users", email_hash)
+    return os.path.join(BASE_QDRANT_PATH, "users", email_hash)
 
 
-def is_chroma_cloud_configured() -> bool:
+def is_qdrant_cloud_configured() -> bool:
     cloud_settings = {
-        "CHROMA_API_KEY": os.getenv("CHROMA_API_KEY"),
-        "CHROMA_TENANT": os.getenv("CHROMA_TENANT"),
-        "CHROMA_DATABASE": os.getenv("CHROMA_DATABASE"),
+        "QDRANT_URL": os.getenv("QDRANT_URL"),
+        "QDRANT_API_KEY": os.getenv("QDRANT_API_KEY"),
     }
     configured = [bool(value) for value in cloud_settings.values()]
     if any(configured) and not all(configured):
         missing = [key for key, value in cloud_settings.items() if not value]
-        raise ValueError(f"Chroma Cloud configuration is incomplete. Missing: {', '.join(missing)}")
+        raise ValueError(f"Qdrant Cloud configuration is incomplete. Missing: {', '.join(missing)}")
     if not any(configured) and os.getenv("VERCEL") == "1":
-        raise ValueError("CHROMA_API_KEY, CHROMA_TENANT, and CHROMA_DATABASE are required on Vercel.")
+        raise ValueError("QDRANT_URL and QDRANT_API_KEY are required on Vercel.")
     return all(configured)
 
 
@@ -115,39 +114,37 @@ def get_collection_name(scope: str, user_email: Optional[str] = None) -> str:
     return f"nexus-user-{user_hash}"
 
 
-_chroma_cloud_client = None
+_qdrant_clients = {}
 
 
-def get_chroma_cloud_client():
-    global _chroma_cloud_client
-    if _chroma_cloud_client is None:
-        import chromadb
+def get_qdrant_client(scope: str, user_email: Optional[str] = None):
+    from qdrant_client import QdrantClient
 
-        _chroma_cloud_client = chromadb.CloudClient(
-            api_key=os.environ["CHROMA_API_KEY"],
-            tenant=os.environ["CHROMA_TENANT"],
-            database=os.environ["CHROMA_DATABASE"],
+    if is_qdrant_cloud_configured():
+        client_key = "cloud"
+        create_client = lambda: QdrantClient(
+            url=os.environ["QDRANT_URL"],
+            api_key=os.environ["QDRANT_API_KEY"],
         )
-    return _chroma_cloud_client
+    else:
+        client_key = get_index_path(scope, user_email)
+        create_client = lambda: QdrantClient(path=client_key)
+
+    if client_key not in _qdrant_clients:
+        _qdrant_clients[client_key] = create_client()
+    return _qdrant_clients[client_key]
 
 
-def get_vector_store(scope: str, user_email: Optional[str], embeddings):
-    if is_chroma_cloud_configured():
-        return Chroma(
-            client=get_chroma_cloud_client(),
-            collection_name=get_collection_name(scope, user_email),
-            embedding_function=embeddings,
-        )
-    return Chroma(
-        persist_directory=get_index_path(scope, user_email),
+def get_vector_store(scope: str, user_email: Optional[str], embeddings) -> QdrantVectorStore:
+    return QdrantVectorStore(
+        client=get_qdrant_client(scope, user_email),
+        collection_name=get_collection_name(scope, user_email),
         embedding_function=embeddings,
     )
 
 
 def get_index_identifier(scope: str, user_email: Optional[str] = None) -> str:
-    if is_chroma_cloud_configured():
-        return get_collection_name(scope, user_email)
-    return get_index_path(scope, user_email)
+    return get_collection_name(scope, user_email)
 
 
 # Global cache for embeddings to avoid reloading
@@ -326,8 +323,7 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
     if index_path in _bm25_cache:
         del _bm25_cache[index_path]
 
-    cloud_storage = is_chroma_cloud_configured()
-    if not cloud_storage:
+    if not is_qdrant_cloud_configured():
         os.makedirs(os.path.dirname(index_path), exist_ok=True)
 
     doc_structure = extract_document_structure(file_bytes, filename)
@@ -346,19 +342,12 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
     total_sections = len(doc_structure.sections) if doc_structure.sections else 0
 
     logger.info(f"Persisting {len(chunks)} chunks to {index_path}...")
-    if cloud_storage:
-        db = Chroma.from_documents(
-            chunks,
-            emb,
-            client=get_chroma_cloud_client(),
-            collection_name=get_collection_name(scope, user_email),
-        )
-    else:
-        db = Chroma.from_documents(chunks, emb, persist_directory=index_path)
-    
+    db = get_vector_store(scope, user_email, emb)
+    db.add_documents(chunks)
+
     # Verify persistence
-    saved_count = len(db.get()['ids'])
-    logger.info(f"Ingested '{filename}' into ChromaDB. Total chunks in index: {saved_count}")
+    saved_count = db.count()
+    logger.info(f"Ingested '{filename}' into Qdrant. Total chunks in index: {saved_count}")
 
     return {
         "status": "ready",
@@ -375,7 +364,7 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
 # Enhancement: BM25 Corpus Cache to avoid db.get() every time
 _bm25_cache = {} # {scope_path: {"bm25": BM25Okapi, "docs": [Document], "timestamp": float}}
 
-def get_bm25_for_db(db: Chroma, index_path: str):
+def get_bm25_for_db(db: QdrantVectorStore, index_path: str):
     global _bm25_cache
     
     while len(_bm25_cache) > MAX_BM25_CACHE_ITEMS:
@@ -402,7 +391,7 @@ def get_bm25_for_db(db: Chroma, index_path: str):
     _bm25_cache[index_path] = {"bm25": bm25, "docs": docs}
     return bm25, docs
 
-async def hybrid_search(query: str, db: Chroma, index_path: str, k: int = 10) -> List[Document]:
+async def hybrid_search(query: str, db: QdrantVectorStore, index_path: str, k: int = 10) -> List[Document]:
     """Precision-first hybrid retrieval: semantic similarity + BM25 + lexical overlap boosting."""
 
     async def get_vector_results():
@@ -461,31 +450,26 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
     """Enhanced retrieval with explicit support for Enterprise, Personal, and Combined modes."""
     
     indices_to_search = []
-    cloud_storage = is_chroma_cloud_configured()
     
     # 1. ENTERPRISE Mode: Only Global Admin Documents
     if mode == "enterprise":
         global_path = get_index_identifier("global")
-        if cloud_storage or os.path.exists(global_path):
-            indices_to_search.append((global_path, "global"))
+        indices_to_search.append((global_path, "global"))
 
     # 2. PERSONAL Mode: Only User's Private Documents
     elif mode == "personal":
         if user_email:
             personal_path = get_index_identifier("personal", user_email)
-            if cloud_storage or os.path.exists(personal_path):
-                indices_to_search.append((personal_path, "personal"))
+            indices_to_search.append((personal_path, "personal"))
 
     # 3. COMBINED Mode: Both Global and Personal (Default)
     else: # combined
         global_path = get_index_identifier("global")
-        if cloud_storage or os.path.exists(global_path):
-            indices_to_search.append((global_path, "global"))
+        indices_to_search.append((global_path, "global"))
             
         if user_email:
             personal_path = get_index_identifier("personal", user_email)
-            if cloud_storage or os.path.exists(personal_path):
-                indices_to_search.append((personal_path, "personal"))
+            indices_to_search.append((personal_path, "personal"))
 
     if not indices_to_search:
         # Avoid NameError by ensuring paths are defined
@@ -498,7 +482,9 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
     
     async def search_index(path, scope):
         try:
-            db = await asyncio.to_thread(get_vector_store, scope, user_email, emb)
+            db = await asyncio.to_thread(get_vector_store, scope, user_email if scope == "personal" else None, emb)
+            if not await asyncio.to_thread(db.collection_exists):
+                return []
             candidates = await hybrid_search(query, db, path, k=RETRIEVAL_K)
             
             if filters:
@@ -679,42 +665,29 @@ def ingest_text(text: str, meta: dict):
     return ingest_document(text.encode(), meta.get("filename", "text.txt"))
 
 def delete_document_from_vector(filename: str, scope: str = "global", user_email: Optional[str] = None) -> bool:
-    """Delete all chunks associated with a specific filename from ChromaDB."""
+    """Delete all chunks associated with a specific filename from Qdrant."""
     index_path = get_index_identifier(scope, user_email)
     
     # Invalidate BM25 cache for this scope
     if index_path in _bm25_cache:
         del _bm25_cache[index_path]
         
-    if not is_chroma_cloud_configured() and not os.path.exists(index_path):
-        logger.warning(f"Cannot delete {filename}: Index path {index_path} does not exist.")
-        return False
-        
     emb = get_embeddings()
     db = get_vector_store(scope, user_email, emb)
     
     try:
-        # We need to get the ids of documents with this filename
-        result = db.get(where={"filename": filename})
-        ids_to_delete = result.get('ids', [])
-        
-        if not ids_to_delete:
-            logger.info(f"No chunks found for '{filename}' in {scope} database.")
-            return True # Nothing to delete
-            
-        db.delete(ids_to_delete)
-        logger.info(f"Deleted {len(ids_to_delete)} chunks for '{filename}' from ChromaDB.")
+        if not db.collection_exists():
+            return True
+        db.delete_where({"filename": filename})
+        logger.info(f"Deleted chunks for '{filename}' from Qdrant.")
         return True
     except Exception as e:
-        logger.error(f"Failed to delete '{filename}' from ChromaDB: {e}")
+        logger.error(f"Failed to delete '{filename}' from Qdrant: {e}")
         return False
 
 
 def vector_document_exists(filename: str, scope: str, user_email: Optional[str] = None) -> bool:
-    if not is_chroma_cloud_configured():
-        index_path = get_index_path(scope, user_email)
-        if not os.path.exists(index_path):
-            return False
-
     db = get_vector_store(scope, user_email, get_embeddings())
+    if not db.collection_exists():
+        return False
     return bool(db.get(where={"filename": filename}, limit=1).get("ids"))

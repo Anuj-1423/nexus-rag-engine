@@ -13,16 +13,15 @@ async def test_rag_retrieval_logic():
     mock_user_email = "test@example.com"
     mock_query = "What is the policy?"
     
-    # We will patch Chroma and hybrid_search to avoid real API calls
+    # Patch the vector-store boundary and hybrid search to avoid external services.
     with patch("rag.get_embeddings") as mock_get_emb, \
-         patch("rag.Chroma") as mock_chroma, \
+         patch("rag.get_vector_store") as mock_vector_store, \
          patch("rag.hybrid_search") as mock_hybrid, \
-         patch("rag.rerank") as mock_rerank, \
-         patch("os.path.exists") as mock_exists:
+         patch("rag.rerank") as mock_rerank:
         
         # Setup mocks
         mock_get_emb.return_value = MagicMock()
-        mock_exists.return_value = True # Assume indices exist
+        mock_vector_store.return_value.collection_exists.return_value = True
         mock_hybrid.return_value = [MagicMock(page_content="Mock Result", metadata={})]
         mock_rerank.return_value = [{"content": "Mock Result", "score": 1.0}]
         

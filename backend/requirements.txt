@@ -5,9 +5,8 @@ mysql-connector-python
 bcrypt
 pyjwt
 langchain-core
-langchain-chroma
 langchain-text-splitters
-chromadb
+qdrant-client
 pypdf
 python-docx
 google-genai
