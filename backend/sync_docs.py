@@ -1,5 +1,6 @@
 
 import logging
+from pymysql.cursors import DictCursor
 from database import get_db_connection, DB_NAME
 from rag import is_qdrant_cloud_configured, vector_document_exists
 
@@ -10,7 +11,7 @@ def sync_document_status():
     is_qdrant_cloud_configured()
 
     conn = get_db_connection(DB_NAME)
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(DictCursor)
 
     try:
         cursor.execute("SELECT id, filename, scope, owner_email FROM documents WHERE status = 'ready'")

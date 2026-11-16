@@ -1,11 +1,10 @@
 
-import mysql.connector
-import os
+from pymysql.cursors import DictCursor
 from database import get_db_connection, DB_NAME
 
 def dump_docs():
     conn = get_db_connection(DB_NAME)
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(DictCursor)
     try:
         cursor.execute("SELECT id, filename, status, scope, owner_email, error_message FROM documents")
         docs = cursor.fetchall()

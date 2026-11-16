@@ -75,7 +75,6 @@ def ensure_fallback_corpus() -> None:
     temp_root = Path(tempfile.mkdtemp(prefix="rag_eval_"))
     rag.BASE_QDRANT_PATH = str(temp_root / "storage" / "qdrant")
     rag.CACHE_PATH = str(temp_root / "query_cache.json")
-    rag._qdrant_clients = {}
 
     global_index = Path(rag.get_index_path("global"))
     if global_index.exists():

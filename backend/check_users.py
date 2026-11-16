@@ -1,9 +1,10 @@
 
+from pymysql.cursors import DictCursor
 from database import get_db_connection, DB_NAME
 
 def check_users():
     conn = get_db_connection(DB_NAME)
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(DictCursor)
     try:
         cursor.execute("SELECT email, role, is_blocked FROM users")
         users = cursor.fetchall()

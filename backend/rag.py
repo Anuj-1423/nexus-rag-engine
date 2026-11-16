@@ -1,6 +1,8 @@
 import os
 import logging
+import math
 import time
+from collections import Counter
 from typing import Optional, List
 import hashlib
 
@@ -17,7 +19,6 @@ USE_LOCAL_EMBEDDINGS = os.getenv("USE_LOCAL_EMBEDDINGS", "false").lower() == "tr
 from document_parser import extract_document_structure, SUPPORTED_EXTENSIONS
 from chunker import chunk_document, get_chunking_stats
 from reranker import rerank
-from rank_bm25 import BM25Okapi
 import json
 from langchain_core.documents import Document
 import asyncio
@@ -114,32 +115,18 @@ def get_collection_name(scope: str, user_email: Optional[str] = None) -> str:
     return f"nexus-user-{user_hash}"
 
 
-_qdrant_clients = {}
-
-
-def get_qdrant_client(scope: str, user_email: Optional[str] = None):
-    from qdrant_client import QdrantClient
-
-    if is_qdrant_cloud_configured():
-        client_key = "cloud"
-        create_client = lambda: QdrantClient(
-            url=os.environ["QDRANT_URL"],
-            api_key=os.environ["QDRANT_API_KEY"],
-        )
-    else:
-        client_key = get_index_path(scope, user_email)
-        create_client = lambda: QdrantClient(path=client_key)
-
-    if client_key not in _qdrant_clients:
-        _qdrant_clients[client_key] = create_client()
-    return _qdrant_clients[client_key]
-
-
 def get_vector_store(scope: str, user_email: Optional[str], embeddings) -> QdrantVectorStore:
+    use_cloud = is_qdrant_cloud_configured()
     return QdrantVectorStore(
-        client=get_qdrant_client(scope, user_email),
         collection_name=get_collection_name(scope, user_email),
         embedding_function=embeddings,
+        url=os.getenv("QDRANT_URL") if use_cloud else None,
+        api_key=os.getenv("QDRANT_API_KEY") if use_cloud else None,
+        local_path=(
+            os.path.join(get_index_path(scope, user_email), "vectors.sqlite3")
+            if not use_cloud
+            else None
+        ),
     )
 
 
@@ -361,8 +348,61 @@ def ingest_document(file_bytes: bytes, filename: str, scope: str = "global", use
 # Retrieval and Query Pipeline
 # ---------------------------------------------------------------------------
 
+class BM25Index:
+    def __init__(self, corpus: List[List[str]], k1: float = 1.5, b: float = 0.75):
+        self.document_frequencies = Counter(
+            term for document in corpus for term in set(document)
+        )
+        self.term_frequencies = [Counter(document) for document in corpus]
+        self.document_lengths = [len(document) for document in corpus]
+        self.average_length = (
+            sum(self.document_lengths) / len(self.document_lengths)
+            if self.document_lengths
+            else 0.0
+        )
+        self.k1 = k1
+        self.b = b
+
+        document_count = len(corpus)
+        self.inverse_document_frequency = {
+            term: math.log(document_count - frequency + 0.5) - math.log(frequency + 0.5)
+            for term, frequency in self.document_frequencies.items()
+        }
+        average_idf = (
+            sum(self.inverse_document_frequency.values()) / len(self.inverse_document_frequency)
+            if self.inverse_document_frequency
+            else 0.0
+        )
+        for term, idf in self.inverse_document_frequency.items():
+            if idf < 0:
+                self.inverse_document_frequency[term] = 0.25 * average_idf
+
+    def get_scores(self, query: List[str]) -> List[float]:
+        scores = [0.0] * len(self.term_frequencies)
+        for term in query:
+            idf = self.inverse_document_frequency.get(term)
+            if idf is None:
+                continue
+            for index, frequencies in enumerate(self.term_frequencies):
+                term_frequency = frequencies.get(term, 0)
+                if not term_frequency:
+                    continue
+                length_normalizer = (
+                    self.k1 * (1.0 - self.b + self.b * self.document_lengths[index] / self.average_length)
+                    if self.average_length
+                    else self.k1
+                )
+                scores[index] += (
+                    idf
+                    * term_frequency
+                    * (self.k1 + 1.0)
+                    / (term_frequency + length_normalizer)
+                )
+        return scores
+
+
 # Enhancement: BM25 Corpus Cache to avoid db.get() every time
-_bm25_cache = {} # {scope_path: {"bm25": BM25Okapi, "docs": [Document], "timestamp": float}}
+_bm25_cache = {} # {scope_path: {"bm25": BM25Index, "docs": [Document], "timestamp": float}}
 
 def get_bm25_for_db(db: QdrantVectorStore, index_path: str):
     global _bm25_cache
@@ -387,7 +427,7 @@ def get_bm25_for_db(db: QdrantVectorStore, index_path: str):
         docs.append(Document(page_content=content, metadata=metadata))
         tokenized_corpus.append(content.split())
     
-    bm25 = BM25Okapi(tokenized_corpus)
+    bm25 = BM25Index(tokenized_corpus)
     _bm25_cache[index_path] = {"bm25": bm25, "docs": docs}
     return bm25, docs
 

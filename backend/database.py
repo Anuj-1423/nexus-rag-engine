@@ -1,6 +1,6 @@
 import os
-import mysql.connector
 import logging
+import pymysql
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,22 +39,21 @@ def get_db_connection(database=None):
                 'port': DB_PORT,
                 'autocommit': True,
                 'connect_timeout': 10,
-                'use_pure': True  # Force Pure Python for best compatibility on Render
+                'charset': 'utf8mb4',
             }
             
             if database:
                 config['database'] = database
             
-            # SSL Configuration for Cloud (Aiven/Render)
+            # Preserve encrypted connections to managed MySQL providers.
             if DB_HOST not in ['localhost', '127.0.0.1']:
-                # ssl_mode is often unsupported in newer C-extensions, 
-                # using ssl_disabled and ssl_verify_cert is more reliable.
                 config['ssl_disabled'] = False
                 config['ssl_verify_cert'] = False
+                config['ssl_verify_identity'] = False
 
-            return mysql.connector.connect(**config)
+            return pymysql.connect(**config)
 
-        except mysql.connector.Error as err:
+        except pymysql.MySQLError as err:
             last_err = err
             logger.warning(f"Database connection attempt {i+1} failed. Error: {err}")
             time.sleep(retry_delay)
@@ -136,7 +135,7 @@ def init_db():
             try:
                 check_cursor.execute(f"SELECT {column} FROM {table} LIMIT 1")
                 check_cursor.fetchall()
-            except mysql.connector.Error:
+            except pymysql.MySQLError:
                 logger.info(f"Migration: Adding {column} to {table}")
                 alter_cursor = mig_conn.cursor()
                 alter_cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
@@ -164,7 +163,7 @@ def init_db():
                 cursor.execute(f"ALTER TABLE `{table}` AUTO_INCREMENT = {next_id}")
                 mig_conn.commit()
                 logger.info(f"Migration: Restored auto-increment on {table}.{column} starting at {next_id}")
-            except mysql.connector.Error as err:
+            except pymysql.MySQLError as err:
                 # Ignore if the table is already valid or the column is missing.
                 if 'does not exist' not in str(err) and 'Duplicate key' not in str(err):
                     logger.warning(f"Auto-increment migration skipped for {table}.{column}: {err}")

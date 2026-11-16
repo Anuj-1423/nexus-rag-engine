@@ -55,9 +55,9 @@ Configure these Vercel environment variables:
 - `QDRANT_URL` and `QDRANT_API_KEY`
 - `COHERE_API_KEY` (optional)
 
-Create a Qdrant Cloud free-tier cluster and add its cluster URL and API key in Vercel before deploying. Local development uses an on-disk Qdrant database when Qdrant Cloud variables are not configured. Vercel deployments use Qdrant Cloud because serverless local files are not durable. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
+Create a Qdrant Cloud free-tier cluster and add its cluster URL and API key in Vercel before deploying. The backend calls Qdrant Cloud's REST API directly, avoiding the larger Qdrant Python client and its gRPC/NumPy dependencies. Local development uses a SQLite-backed vector store when Qdrant Cloud variables are not configured; Vercel deployments require Qdrant Cloud because serverless local files are not durable. A lightweight pure-Python MySQL driver connects to Aiven. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
 
-Existing local Chroma indexes are not copied to Qdrant automatically; re-upload or migrate those documents. Profile photos written by the current profile endpoint use temporary serverless storage on Vercel and are not durable across function instances.
+Existing local Chroma or embedded-Qdrant indexes are not copied to Qdrant Cloud or the new local SQLite store automatically; re-upload or migrate those documents. Profile photos written by the current profile endpoint use temporary serverless storage on Vercel and are not durable across function instances.
 
 ## Supported uploads
 

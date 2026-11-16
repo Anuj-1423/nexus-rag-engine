@@ -1,5 +1,5 @@
 import os
-import mysql.connector
+import pymysql
 import logging
 import shutil
 import asyncio
@@ -114,7 +114,7 @@ def register(data: RegisterRequest):
                     (data.full_name, data.email, hashed, data.role))
         conn.commit()
         return {"msg": "User registered successfully"}
-    except mysql.connector.Error as db_err:
+    except pymysql.MySQLError as db_err:
         logger.error(f"Registration DB Error: {db_err}")
         if "Duplicate entry" in str(db_err):
             raise HTTPException(400, "Email already registered")

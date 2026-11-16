@@ -1,5 +1,4 @@
 from database import get_db_connection, DB_NAME
-import mysql.connector
 
 def sync_schema():
     conn = get_db_connection(DB_NAME)
