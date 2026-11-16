@@ -1,22 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Nexus RAG | Workspace</title>
+    <title>Assistant - Knowledge Platform</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography,container-queries"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link rel="stylesheet" href="style.css">
-    <script>
-        function applyTheme() {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-        applyTheme();
-        window.addEventListener('storage', (e) => { if (e.key === 'theme') applyTheme(); });
-    </script>
+    <link rel="stylesheet" href="style.css?v=professional-light-15">
+    <script>document.documentElement.classList.remove('dark');</script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -36,7 +29,7 @@
         }
     </script>
 </head>
-<body class="workspace-page user-workspace antialiased font-['Inter'] overflow-hidden">
+<body class="user-app antialiased font-['Manrope'] overflow-hidden">
     <div class="flex h-screen relative overflow-hidden">
         <!-- Mobile Sidebar Overlay -->
         <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
@@ -44,10 +37,7 @@
         <!-- Sidebar -->
         <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-72 lg:static lg:w-64 flex-shrink-0 flex flex-col py-6 z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="px-6 mb-10 flex items-center gap-3">
-                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                    <span class="material-symbols-outlined text-white">hub</span>
-                </div>
-                <span class="text-xl font-bold tracking-tight">Nexus RAG</span>
+                <span class="text-xl font-bold tracking-tight">AI Assistant</span>
             </div>
             
             <nav class="flex-1 px-3 space-y-1">
@@ -55,7 +45,7 @@
                     <span class="material-symbols-outlined mr-3 text-[22px]">chat_bubble</span>Assistant
                 </button>
                 <button onclick="switchTab('library')" class="tab-btn nav-item w-full flex items-center px-4 py-3 rounded-lg font-medium">
-                    <span class="material-symbols-outlined mr-3 text-[22px]">folder_shared</span>Document Library
+                    <span class="material-symbols-outlined mr-3 text-[22px]">folder_shared</span>My Knowledge
                 </button>
                 <button onclick="switchTab('history')" class="tab-btn nav-item w-full flex items-center px-4 py-3 rounded-lg font-medium">
                     <span class="material-symbols-outlined mr-3 text-[22px]">history</span>History
@@ -194,8 +184,8 @@
                 <div id="statsView" class="tab-content hidden h-full overflow-y-auto p-8 space-y-8">
                     <div class="flex justify-between items-center mb-8">
                         <div>
-                            <h3 class="text-xl font-bold">Usage overview</h3>
-                            <p class="text-text-muted text-sm">A quick summary of your questions and personal documents.</p>
+                            <h3 class="text-xl font-bold">Statistical Analysis</h3>
+                            <p class="text-text-muted text-sm">Overview of your activity and usage.</p>
                         </div>
                     </div>
                     
@@ -210,7 +200,7 @@
                             </div>
                         </div>
                         <div class="card p-6 flex items-center gap-6">
-                            <div class="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                            <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-3xl">description</span>
                             </div>
                             <div>
@@ -219,7 +209,7 @@
                             </div>
                         </div>
                         <div class="card p-6 flex items-center gap-6 md:col-span-2">
-                            <div class="w-16 h-16 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                            <div class="w-16 h-16 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-3xl">hub</span>
                             </div>
                             <div>
@@ -242,7 +232,7 @@
                 <span class="material-symbols-outlined text-3xl">warning</span>
             </div>
             <h3 class="text-xl font-bold text-center mb-2">Delete Document?</h3>
-            <p class="text-center text-text-muted mb-8">Are you sure you want to delete <span id="deleteFileName" class="font-bold text-text-main break-all"></span>? This action cannot be undone and the document will be permanently removed from your Nexus collection.</p>
+            <p class="text-center text-text-muted mb-8">Are you sure you want to delete <span id="deleteFileName" class="font-bold text-text-main break-all"></span>? This action cannot be undone and it will be permanently removed from the AI's knowledge base.</p>
             <div class="flex gap-4">
                 <button onclick="closeDeleteModal()" class="flex-1 px-6 py-3 rounded-xl font-bold border border-border hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">No, Cancel</button>
                 <button id="confirmDeleteBtn" class="flex-1 px-6 py-3 rounded-xl font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 transition-all flex items-center justify-center gap-2">
@@ -284,15 +274,9 @@
             img.src = '/profiles/' + pic;
             img.classList.remove('hidden');
         }
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
+        // Dark mode already initialized in <head>
 
         let currentMode = localStorage.getItem('retrievalMode') || 'combined'; // 'enterprise', 'personal', or 'combined'
-
-        function toggleDarkMode() {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
 
@@ -361,16 +345,16 @@
             if (mobileSelector) mobileSelector.value = mode;
 
             if (mode === 'enterprise') {
-                document.getElementById('welcomeTitle').innerText = "Nexus Knowledge Base";
+                document.getElementById('welcomeTitle').innerText = "Enterprise Brain";
                 document.getElementById('welcomeSubtitle').innerText = "Connected to the company-wide knowledge base.";
                 document.getElementById('brainIcon').innerText = "hub";
             } else if (mode === 'personal') {
-                document.getElementById('welcomeTitle').innerText = "Personal collection";
+                document.getElementById('welcomeTitle').innerText = "Personal Brain";
                 document.getElementById('welcomeSubtitle').innerText = "Connected to your private document collection.";
                 document.getElementById('brainIcon').innerText = "person";
             } else {
-                document.getElementById('welcomeTitle').innerText = "Combined collections";
-                document.getElementById('welcomeSubtitle').innerText = "Searching across shared company and personal documents.";
+                document.getElementById('welcomeTitle').innerText = "Unified Brain";
+                document.getElementById('welcomeSubtitle').innerText = "Searching across both Enterprise and Personal documents.";
                 document.getElementById('brainIcon').innerText = "auto_awesome";
             }
         }
@@ -692,7 +676,7 @@
             if (statRecentScope) {
                 if (data.length > 0) {
                     const latest = data[0].scope;
-                    statRecentScope.innerText = latest === 'global' ? 'Nexus Knowledge Base' : 'Personal collection';
+                    statRecentScope.innerText = latest === 'global' ? 'Enterprise Brain' : 'Personal Brain';
                 } else {
                     statRecentScope.innerText = 'No interactions yet';
                 }

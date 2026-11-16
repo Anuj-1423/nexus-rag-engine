@@ -1,19 +1,18 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="scroll-smooth overflow-x-hidden">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus RAG Engine | Platform</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - Enterprise RAG Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=professional-light-15">
     <script>
-        function applyTheme() {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-        applyTheme();
+        document.documentElement.classList.remove('dark');
+
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             if (!menu) return;
@@ -22,93 +21,386 @@
         }
     </script>
     <script>
-        tailwind.config = { theme: { extend: { colors: { primary: 'var(--primary)', 'primary-hover': 'var(--primary-hover)', 'bg-surface': 'var(--bg-surface)', 'bg-card': 'var(--bg-card)', 'text-main': 'var(--text-main)', 'text-muted': 'var(--text-muted)', border: 'var(--border)' } } } }
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: "var(--primary)", "primary-hover": "var(--primary-hover)", "bg-surface": "var(--bg-surface)", "bg-card": "var(--bg-card)", "text-main": "var(--text-main)", "text-muted": "var(--text-muted)", border: "var(--border)" } } }
+        }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .hero-serif { font-family: Georgia, 'Times New Roman', serif; }
+        body {
+            font-family: "Manrope", sans-serif;
+        }
+
+        .stat-num {
+            background: linear-gradient(135deg, #c85c16, #ed8a38);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gt {
+            background: linear-gradient(135deg, #c85c16, #ed8a38);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .fcard {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .fcard:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px rgba(53, 37, 205, 0.12);
+        }
     </style>
 </head>
+
 <body class="public-page bg-bg-surface text-text-main antialiased">
-    <header class="fixed inset-x-0 top-0 z-50 border-b border-[#dce6e3] bg-white/95 backdrop-blur">
-        <nav class="mx-auto flex h-[78px] max-w-[1840px] items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
-            <a href="index.html" class="flex items-center gap-2.5" aria-label="Nexus RAG home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#5b4be8] text-lg font-bold text-white">N</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">Nexus RAG</span></a>
-            <div class="hidden items-center gap-9 text-sm font-medium text-[#41576a] md:flex">
-                <a href="index.html">Home</a><a href="features.html" class="text-[#5b4be8]">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a href="register.html" class="rounded-lg bg-[#5b4be8] px-5 py-3 font-semibold text-white hover:bg-[#4636d1]">Get started</a>
+
+    <!-- Nav -->
+    <nav id="mainNav"
+        class="fixed top-0 left-0 right-0 z-50 bg-bg-surface border-b border-border transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <a href="index.html" class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-brain text-xl"></i></div>
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">ENTRAG</span>
+            </a>
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="index.html" class="text-text-muted hover:text-primary font-medium transition-colors">Home</a>
+                <a href="features.html" class="text-primary font-semibold">Features</a>
+                <a href="models.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Models</a>
+                <a href="contact.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Contact</a>
+                <div class="h-6 w-px bg-border"></div>
+                <button id="themeToggle"
+                    class="text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <a href="login.html"
+                    class="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105 shadow-md flex items-center gap-2">
+                    Login <i class="fa-solid fa-arrow-right text-sm"></i>
+                </a>
             </div>
-            <details class="mobile-site-menu relative md:hidden">
-                <summary aria-label="Open site navigation"><span class="mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span></summary>
-                <div class="mobile-site-menu__panel">
-                    <a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a class="mobile-site-menu__cta" href="register.html">Get started</a>
+
+            <!-- Mobile Toggle -->
+            <div class="flex items-center gap-1 md:hidden">
+                <button id="themeToggleMobile"
+                    class="text-text-muted w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <button onclick="toggleMobileMenu()"
+                    class="text-text-main w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-[100] md:hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleMobileMenu()"></div>
+        <div
+            class="absolute right-0 top-0 bottom-0 w-72 bg-bg-surface border-l border-border p-8 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-10">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight">Menu</span>
                 </div>
-            </details>
-        </nav>
-    </header>
-    <main class="pt-24">
-        <section class="mx-auto max-w-[1840px] px-6 pb-20 pt-16 lg:px-8">
-            <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+                <button onclick="toggleMobileMenu()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="flex flex-col gap-2 flex-1">
+                <a href="index.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-house w-6 text-xl"></i> Home
+                </a>
+                <a href="features.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-primary bg-primary/10 font-bold transition-all">
+                    <i class="fa-solid fa-layer-group w-6 text-xl"></i> Features
+                </a>
+                <a href="models.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-microchip w-6 text-xl"></i> Models
+                </a>
+                <a href="contact.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-envelope w-6 text-xl"></i> Contact
+                </a>
+                <div class="h-px bg-border my-6"></div>
+                <a href="login.html"
+                    class="bg-primary text-white p-4 rounded-2xl font-bold text-center shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Login</a>
+                <a href="register.html"
+                    class="border border-border text-text-main p-4 rounded-2xl font-bold text-center hover:bg-gray-50 dark:hover:bg-slate-800 transition-all mt-3">Register</a>
+            </div>
+            <div class="mt-auto pt-8 border-t border-border">
+                <p class="text-[10px] uppercase tracking-widest font-black text-text-muted mb-4 text-center">Connected
+                    to Enterprise RAG</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Hero -->
+    <section class="public-hero"
+        style="background: radial-gradient(ellipse at 50% 0%, rgba(53,37,205,0.10) 0%, transparent 70%);">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="public-copy hero-layout">
                 <div>
-                    <h1 class="hero-serif text-[3.1rem] leading-[0.95] tracking-[-0.05em] text-[#20312f] md:text-[4.5rem]">Search internal knowledge. Get answers in context.</h1>
-                    <p class="mt-6 max-w-[560px] text-xl leading-8 text-[#60716f]">
-                        Nexus combines document parsing, semantic search, keyword matching, and reranking to surface relevant company knowledge for conversational answers.
-                    </p>
-                    <div class="mt-8 flex flex-wrap gap-4">
-                        <a href="register.html" class="btn-primary px-7 py-4 text-base">See how it works</a>
-                        <a href="#capabilities" class="rounded-xl border border-border bg-white px-7 py-4 text-base font-semibold text-[#20312f]">Explore the platform</a>
-                    </div>
-                    <div class="mt-8 flex items-start gap-3 text-[#60716f]">
-                        <span class="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f0f1ff] text-[0.7rem] text-primary">i</span>
-                        <p class="max-w-[420px] text-sm leading-6">Answers use your organization's indexed documents as context. Verify important details against the source.</p>
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-6 border border-primary/20">
+                        <i class="fa-solid fa-layer-group text-xs"></i> Platform Features</div>
+                    <h1 class="text-5xl md:text-6xl font-extrabold leading-tight mb-6">Built for the <br /><span
+                            class="bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">Enterprise</span>
+                    </h1>
+                    <p class="text-xl text-text-muted leading-relaxed mb-8">Upload team documents, search by meaning, and ask questions with responses linked to the material they reference.</p>
+                    <div class="flex flex-wrap gap-4">
+                        <a href="login.html"
+                            class="bg-primary hover:bg-primary-hover text-white px-7 py-3.5 rounded-xl font-semibold transition-all shadow-lg flex items-center gap-2">Open your workspace <i class="fa-solid fa-arrow-right text-sm"></i></a>
+                        <a href="contact.html"
+                            class="border border-border hover:border-primary text-text-main px-7 py-3.5 rounded-xl font-semibold transition-all">Talk
+                            to Sales</a>
                     </div>
                 </div>
-                <div class="relative mx-auto w-full max-w-[740px]">
-                    <div class="absolute inset-0 rounded-[2.5rem] bg-[#dce6e3] blur-[80px]"></div>
-                    <div class="relative overflow-hidden rounded-[2.5rem] border border-[#dce6e3] bg-white p-3 shadow-[0_30px_70px_rgba(13,93,90,0.12)]">
-                        <div class="overflow-hidden rounded-[2rem] bg-[#e8efed]">
-                            <img src="images/team-knowledge-search.webp" alt="IT colleagues collaborating around laptops in an office" class="h-[540px] w-full object-cover" />
+                <figure class="hero-media">
+                    <img src="images/team-meeting.jpg" alt="Colleagues discussing work together at a shared table" fetchpriority="high">
+                    <figcaption>Bring useful context closer to the work.</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-shield"></i></div>
+                    <h2 class="text-4xl font-bold mb-4">Account access &amp; document scope</h2>
+                    <p class="text-text-muted text-lg leading-relaxed mb-6">The application separates employee and administrator workspaces and uses authenticated sessions. Review the deployment and storage configuration to confirm it meets your organization's security requirements.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <div
+                                class="w-6 h-6 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs"></i></div>
+                            <div>
+                                <p class="font-semibold">Separate workspace roles</p>
+                                <p class="text-text-muted text-sm">Employee and administrator areas provide different tools for working with personal and enterprise documents.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div
+                                class="w-6 h-6 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs"></i></div>
+                            <div>
+                                <p class="font-semibold">Password-based sign-in</p>
+                                <p class="text-text-muted text-sm">Passwords are hashed before storage, and signed tokens are used for authenticated requests.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div
+                                class="w-6 h-6 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs"></i></div>
+                            <div>
+                                <p class="font-semibold">Personal document space</p>
+                                <p class="text-text-muted text-sm">Personal files and conversations are kept in the user's workspace rather than shared with other employees.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div
+                                class="w-6 h-6 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i class="fa-solid fa-check text-xs"></i></div>
+                            <div>
+                                <p class="font-semibold">Authenticated requests</p>
+                                <p class="text-text-muted text-sm">The application uses token-based authentication for signed-in sessions.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card p-6 fcard"><i class="fa-solid fa-lock text-2xl text-blue-500 mb-4"></i>
+                        <h4 class="font-bold mb-2">Signed sessions</h4>
+                        <p class="text-text-muted text-sm">Protected application routes require an authenticated session.</p>
+                    </div>
+                    <div class="card p-6 fcard mt-8"><i class="fa-solid fa-user-shield text-2xl text-blue-500 mb-4"></i>
+                        <h4 class="font-bold mb-2">Document ownership</h4>
+                        <p class="text-text-muted text-sm">Personal document libraries are scoped to their owner.</p>
+                    </div>
+                    <div class="card p-6 fcard"><i class="fa-solid fa-clipboard-list text-2xl text-blue-500 mb-4"></i>
+                        <h4 class="font-bold mb-2">Source references</h4>
+                        <p class="text-text-muted text-sm">Review the documents used to prepare a response.</p>
+                    </div>
+                    <div class="card p-6 fcard mt-8"><i class="fa-solid fa-server text-2xl text-blue-500 mb-4"></i>
+                        <h4 class="font-bold mb-2">Deployment control</h4>
+                        <p class="text-text-muted text-sm">Configure credentials and storage for your environment.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vector Search -->
+    <section class="py-24 bg-black/5 dark:bg-white/5 border-y border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="public-copy feature-content-layout">
+                <div>
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                    <h2 class="text-4xl font-bold mb-4">Semantic Vector Search</h2>
+                    <p class="text-text-muted text-lg leading-relaxed mb-6">Search uses document embeddings to find passages related to a question, even when the wording differs. Retrieved passages are then used to provide context for the answer.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-purple-500"><i
+                                class="fa-solid fa-bolt text-purple-500 text-xl mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Chroma vector storage</h4>
+                                <p class="text-text-muted text-sm">Document embeddings are stored in a persistent Chroma collection for retrieval.</p>
+                            </div>
                         </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-purple-500"><i
+                                class="fa-solid fa-network-wired text-purple-500 text-xl mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Multi-Format Ingestion</h4>
+                                <p class="text-text-muted text-sm">Upload supported documents to have their text split into passages, embedded, and indexed.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-purple-500"><i
+                                class="fa-solid fa-sliders text-purple-500 text-xl mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Optional reranking</h4>
+                                <p class="text-text-muted text-sm">An optional Cohere reranker can refine retrieval results; a local lexical fallback is available without it.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <figure class="feature-photo">
+                    <img src="images/document-review.jpg" alt="A calm, light-filled office interior" loading="lazy">
+                    <figcaption>Find the right passage without searching file by file.</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
 
+    <!-- Intelligent Chat -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="public-copy feature-content-layout feature-content-reverse">
+                <div>
+                    <div
+                        class="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-robot"></i></div>
+                    <h2 class="text-4xl font-bold mb-4">Intelligent Cited Answers</h2>
+                    <p class="text-text-muted text-lg leading-relaxed mb-6">The assistant combines a question with passages retrieved from your documents and includes source references, so your team can check the original material.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="card p-5 fcard"><i class="fa-solid fa-quote-left text-emerald-500 text-xl mb-3"></i>
+                            <h4 class="font-bold mb-2">Source Citations</h4>
+                            <p class="text-text-muted text-sm">Every answer includes the exact document and page number
+                                it was derived from.</p>
+                        </div>
+                        <div class="card p-5 fcard"><i class="fa-solid fa-ban text-emerald-500 text-xl mb-3"></i>
+                            <h4 class="font-bold mb-2">Context-grounded responses</h4>
+                            <p class="text-text-muted text-sm">Responses use retrieved passages as context; verify important details against the cited source.</p>
+                        </div>
+                        <div class="card p-5 fcard"><i class="fa-solid fa-comments text-emerald-500 text-xl mb-3"></i>
+                            <h4 class="font-bold mb-2">Conversation Memory</h4>
+                            <p class="text-text-muted text-sm">Multi-turn conversations with full context window for
+                                continuous, coherent dialogues.</p>
+                        </div>
+                        <div class="card p-5 fcard"><i class="fa-solid fa-globe text-emerald-500 text-xl mb-3"></i>
+                            <h4 class="font-bold mb-2">Natural-language questions</h4>
+                            <p class="text-text-muted text-sm">Ask questions about the material in your workspace and review the related source references.</p>
+                        </div>
+                    </div>
+                </div>
+                <figure class="feature-photo">
+                    <img src="images/team-collaboration.jpg" alt="Colleagues working together around shared documents" loading="lazy">
+                    <figcaption>Keep the original source close to every answer.</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="py-20 bg-gradient-to-r from-primary to-orange-400">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-4xl font-extrabold text-white mb-4">See how it fits your workflow</h2>
+            <p class="text-white/80 text-xl mb-10">ENTRAG can be up and running on your infrastructure in under 30
+                minutes. Our team handles the hard parts.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="login.html"
+                    class="bg-white text-primary font-bold px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-xl">Get
+                    Started Free</a>
+                <a href="contact.html"
+                    class="border-2 border-white/50 text-white font-bold px-8 py-4 rounded-xl transition-all hover:border-white hover:scale-105">Schedule
+                    a Demo</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-16 bg-bg-card border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between gap-12 mb-16">
+                <div class="max-w-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div
+                            class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight">ENTRAG</span>
+                    </div>
+                    <p class="text-text-muted leading-relaxed mb-6">Enterprise-grade RAG platform for modern
+                        organizations.</p>
+                    <div class="flex flex-col gap-3">
+                        <p class="text-text-muted flex items-center gap-3 text-sm"><i
+                                class="fa-solid fa-envelope text-primary w-5"></i> anujsingh41086@gmail.com</p>
+                        <p class="text-text-muted flex items-center gap-3 text-sm"><i
+                                class="fa-solid fa-phone text-primary w-5"></i> +91 7722984430</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-12">
+                    <div>
+                        <h4 class="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Product</h4>
+                        <ul class="space-y-4 text-sm">
+                            <li><a href="features.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Features</a></li>
+                            <li><a href="models.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Models</a></li>
+                            <li><a href="contact.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold mb-6 uppercase text-xs tracking-widest text-text-muted">Company</h4>
+                        <ul class="space-y-4 text-sm">
+                            <li><a href="contact.html"
+                                    class="text-text-muted hover:text-primary transition-colors">Contact</a></li>
+                            <li><a href="#" class="text-text-muted hover:text-primary transition-colors">About</a></li>
+                        </ul>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="about" class="border-y border-[#dce6e3] bg-white/70"><div class="mx-auto max-w-[1840px] px-6 py-20 lg:px-8"><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Retrieval built for real company knowledge</p><h2 class="mt-4 max-w-[760px] font-serif text-4xl leading-tight">Find the right passage across policies, handbooks, agreements, and technical docs.</h2><p class="mt-5 max-w-2xl text-lg leading-8 text-[#60716f]">Nexus combines complementary retrieval methods so questions can find both exact terms and conceptually related passages.</p><div class="mt-10 grid gap-6 md:grid-cols-3"><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-chart-line text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Hybrid search</h3><p class="mt-3 leading-7 text-[#60716f]">Combine semantic vector retrieval with BM25 keyword search to find policy language, named systems, and related concepts.</p></article><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-code-compare text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Semantic chunking</h3><p class="mt-3 leading-7 text-[#60716f]">Split documents into meaningful sections so retrieved context retains the surrounding policy or agreement detail.</p></article><article class="rounded-2xl border border-border bg-white p-7"><i class="fa-solid fa-clipboard-check text-2xl text-primary"></i><h3 class="mt-5 text-xl font-semibold">Cross-encoder reranking</h3><p class="mt-3 leading-7 text-[#60716f]">Reorder candidate passages by query relevance before they are passed to answer generation.</p></article></div></div></section>
-        <section class="mx-auto max-w-[1840px] px-6 py-20 lg:px-8"><div class="grid gap-12 lg:grid-cols-2"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">From upload to answer</p><h2 class="mt-4 font-serif text-4xl leading-tight">A straightforward workflow for both employees and knowledge managers.</h2><p class="mt-5 text-lg leading-8 text-[#60716f]">Upload supported documents, ask a question in natural language, then inspect the generated response and its retrieved context.</p></div><ol class="space-y-6"><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f1ff] font-bold text-primary">1</span><div><h3 class="font-semibold">Upload documents</h3><p class="mt-2 leading-7 text-[#60716f]">Add shared company knowledge or personal reference files in PDF, DOCX, TXT, or CSV format.</p></div></li><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f1ff] font-bold text-primary">2</span><div><h3 class="font-semibold">Search across collections</h3><p class="mt-2 leading-7 text-[#60716f]">Choose enterprise, personal, or combined retrieval for the right scope of documents.</p></div></li><li class="flex gap-5"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f0f1ff] font-bold text-primary">3</span><div><h3 class="font-semibold">Use answers in context</h3><p class="mt-2 leading-7 text-[#60716f]">Review the answer and supporting passages, and follow the source document when exact wording matters.</p></div></li></ol></div></section>
-        <section class="bg-[#f0f1ff]"><div class="mx-auto grid max-w-[1840px] gap-10 px-6 py-16 lg:grid-cols-[.8fr_1.2fr] lg:px-8"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Knowledge stays organized by scope</p><h2 class="mt-4 font-serif text-4xl leading-tight">Keep shared company content and personal documents distinct.</h2></div><div class="grid gap-6 sm:grid-cols-2"><div><h3 class="font-semibold">Enterprise library</h3><p class="mt-2 leading-7 text-[#60716f]">Administrators manage shared documents that are available to authorized employees.</p></div><div><h3 class="font-semibold">Personal collections</h3><p class="mt-2 leading-7 text-[#60716f]">Employees can add private reference documents to their own searchable workspace.</p></div><div><h3 class="font-semibold">Supported formats</h3><p class="mt-2 leading-7 text-[#60716f]">Index PDF, DOCX, TXT, and CSV files for conversational retrieval.</p></div><div><h3 class="font-semibold">Source-aware review</h3><p class="mt-2 leading-7 text-[#60716f]">Use retrieved passages to verify policy details, agreement language, and procedural steps.</p></div></div></div></section>
-    </main>
-
-    <footer class="bg-[#111827] text-white">
-        <div class="mx-auto grid max-w-[1840px] gap-10 px-6 py-14 md:grid-cols-4 lg:px-8">
-            <div>
-                <div class="mb-5 flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-bold text-[#111827]">N</div>
-                    <span class="text-2xl font-semibold">Nexus RAG</span>
-                </div>
-                <p class="max-w-xs text-white/70">A document-grounded assistant for the knowledge your teams rely on.</p>
-            </div>
-            <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Quick links</h3>
-                <ul class="space-y-3 text-white/80">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="features.html">Platform</a></li>
-                    <li><a href="models.html">Use cases</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Contact</h3>
-                <ul class="space-y-3 text-white/80">
-                    <li>Anuj Singh</li>
-                    <li><a href="mailto:anujsingh41086@gmail.com">anujsingh41086@gmail.com</a></li>
-                    <li>Noida Sector 40, UP</li>
-                </ul>
-            </div>
-            <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Get in touch</h3>
-                <a class="text-white/80 hover:text-white" href="mailto:anujsingh41086@gmail.com">Email Nexus RAG</a>
+            <div
+                class="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6 text-xs text-text-muted">
+                <p>&copy; 2026 Enterprise RAG Platform. Developed by Anuj Singh.</p>
             </div>
         </div>
     </footer>
+
+    <script>
+    </script>
+
 </body>
+
 </html>

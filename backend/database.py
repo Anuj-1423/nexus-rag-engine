@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # Database Configuration
 DB_HOST = os.getenv('DB_HOST', 'localhost').strip()
 DB_USER = os.getenv('DB_USER', 'root').strip()
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'Ishan@1423').strip()
+DB_PASSWORD = os.getenv('DB_PASSWORD', '').strip()
 DB_NAME = os.getenv('DB_NAME', 'defaultdb').strip()
 DB_PORT_RAW = os.getenv('DB_PORT', '3306').strip()
 

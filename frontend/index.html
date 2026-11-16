@@ -1,19 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" class="scroll-smooth overflow-x-hidden">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus RAG Engine | Enterprise Document Assistant</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Enterprise RAG - AI Powered Knowledge Platform</title>
+    <meta name="description"
+        content="ENTRAG: Enterprise AI knowledge platform. Chat with your internal documents and get cited answers in seconds.">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=professional-light-15">
     <script>
-        function applyTheme() {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-        applyTheme();
+        document.documentElement.classList.remove('dark');
+
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
             if (!menu) return;
@@ -22,106 +23,477 @@
         }
     </script>
     <script>
-        tailwind.config = { theme: { extend: { colors: { primary: 'var(--primary)', 'primary-hover': 'var(--primary-hover)', 'bg-surface': 'var(--bg-surface)', 'bg-card': 'var(--bg-card)', 'text-main': 'var(--text-main)', 'text-muted': 'var(--text-muted)', border: 'var(--border)' } } } }
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: "var(--primary)", "primary-hover": "var(--primary-hover)", "bg-surface": "var(--bg-surface)", "bg-card": "var(--bg-card)", "text-main": "var(--text-main)", "text-muted": "var(--text-muted)", border: "var(--border)" } } }
+        }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .hero-serif { font-family: Georgia, 'Times New Roman', serif; }
+        body {
+            font-family: 'Manrope', sans-serif
+        }
+
+        @media (min-width: 1024px) {
+            #mainNav > div,
+            .max-w-7xl {
+                width: calc(100% - clamp(40px, 4vw, 72px)) !important;
+                max-width: 1680px !important;
+            }
+
+            .max-w-7xl {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .max-w-7xl {
+                width: calc(100% - 32px) !important;
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+
+        .z1 {
+            position: relative;
+            z-index: 1
+        }
+
+        .gt {
+            background: linear-gradient(135deg, #c85c16, #ed8a38);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .c3d {
+            transition: transform .35s, box-shadow .35s
+        }
+
+        .c3d:hover {
+            transform: perspective(800px) rotateY(-5deg) rotateX(3deg) scale(1.02);
+            box-shadow: 10px 18px 45px rgba(53, 37, 205, .18)
+        }
+
+        .fl {
+            animation: fl 5s ease-in-out infinite
+        }
+
+        .fl2 {
+            animation: fl 5s ease-in-out 1.5s infinite
+        }
+
+        .fl3 {
+            animation: fl 5s ease-in-out 3s infinite
+        }
+
+        @keyframes fl {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-12px)
+            }
+        }
+
+        .gw {
+            box-shadow: 0 0 0 1px rgba(53, 37, 205, .2), 0 8px 30px rgba(53, 37, 205, .1)
+        }
+
+        .sn {
+            background: linear-gradient(135deg, #c85c16, #ed8a38);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .tk {
+            overflow: hidden;
+            white-space: nowrap;
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)
+        }
+
+        .tki {
+            display: inline-flex;
+            gap: 3rem;
+            animation: tka 25s linear infinite
+        }
+
+        @keyframes tka {
+            to {
+                transform: translateX(-50%)
+            }
+        }
     </style>
 </head>
-<body class="public-page bg-bg-surface text-text-main antialiased">
-    <header class="fixed inset-x-0 top-0 z-50 border-b border-[#dce6e3] bg-white/95 backdrop-blur">
-        <nav class="mx-auto flex h-[78px] max-w-[1840px] items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main navigation">
-            <a href="index.html" class="flex items-center gap-2.5" aria-label="Nexus RAG home"><span class="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[#5b4be8] text-lg font-bold text-white">N</span><span class="text-[1.45rem] font-bold tracking-[-.04em]">Nexus RAG</span></a>
-            <div class="hidden items-center gap-9 text-sm font-medium text-[#41576a] md:flex">
-                <a href="index.html" class="text-[#5b4be8]">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a href="register.html" class="rounded-lg bg-[#5b4be8] px-5 py-3 font-semibold text-white hover:bg-[#4636d1]">Get started</a>
-            </div>
-            <details class="mobile-site-menu relative md:hidden">
-                <summary aria-label="Open site navigation"><span class="mobile-menu-icon" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span></summary>
-                <div class="mobile-site-menu__panel">
-                    <a href="index.html">Home</a><a href="features.html">Platform</a><a href="models.html">Use cases</a><a href="insights.html">Resources</a><a href="contact.html">Contact</a><a href="how-it-works.html">How it works</a><a href="login.html">Sign in</a><a class="mobile-site-menu__cta" href="register.html">Get started</a>
+
+<body class="public-page bg-bg-surface text-text-main antialiased overflow-x-hidden w-full">
+
+    <!-- Nav -->
+    <nav id="mainNav"
+        class="fixed top-0 left-0 right-0 z-50 bg-bg-surface border-b border-border transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center h-16 w-full">
+            <a href="index.html" class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                    <i class="fa-solid fa-brain text-xl"></i>
                 </div>
-            </details>
-        </nav>
-    </header>
-    <main class="pt-24">
-        <section class="mx-auto max-w-[1840px] px-6 pb-20 pt-16 lg:px-8">
-            <div class="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+                <span
+                    class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">ENTRAG</span>
+            </a>
+
+            <!-- Desktop Nav -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="index.html" class="text-primary font-semibold">Home</a>
+                <a href="features.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Features</a>
+                <a href="models.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Models</a>
+                <a href="contact.html"
+                    class="text-text-muted hover:text-primary font-medium transition-colors">Contact</a>
+                <div class="h-6 w-px bg-border"></div>
+                <button id="themeToggle"
+                    class="text-text-muted hover:text-primary transition-colors p-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <a href="login.html"
+                    class="bg-primary hover:bg-primary-hover text-white px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105 shadow-md flex items-center gap-2">
+                    Login <i class="fa-solid fa-arrow-right text-sm"></i>
+                </a>
+            </div>
+
+            <!-- Mobile Toggle -->
+            <div class="flex items-center gap-1 md:hidden">
+                <button id="themeToggleMobile"
+                    class="text-text-muted w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block"></i>
+                </button>
+                <button onclick="toggleMobileMenu()"
+                    class="text-text-main w-10 h-10 flex items-center justify-center rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-[100] md:hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-md" onclick="toggleMobileMenu()"></div>
+        <div
+            class="absolute right-0 top-0 bottom-0 w-72 bg-bg-surface border-l border-border p-8 shadow-2xl flex flex-col">
+            <div class="flex justify-between items-center mb-10">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-brain text-xs"></i>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight">Menu</span>
+                </div>
+                <button onclick="toggleMobileMenu()"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="flex flex-col gap-2 flex-1">
+                <a href="index.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-primary bg-primary/10 font-bold transition-all">
+                    <i class="fa-solid fa-house w-6 text-xl"></i> Home
+                </a>
+                <a href="features.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-layer-group w-6 text-xl"></i> Features
+                </a>
+                <a href="models.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-microchip w-6 text-xl"></i> Models
+                </a>
+                <a href="contact.html"
+                    class="flex items-center gap-4 p-4 rounded-xl text-text-muted hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-800/50 font-semibold transition-all">
+                    <i class="fa-solid fa-envelope w-6 text-xl"></i> Contact
+                </a>
+                <div class="h-px bg-border my-6"></div>
+                <a href="login.html"
+                    class="bg-primary text-white p-4 rounded-2xl font-bold text-center shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">Login</a>
+                <a href="register.html"
+                    class="border border-border text-text-main p-4 rounded-2xl font-bold text-center hover:bg-gray-50 dark:hover:bg-slate-800 transition-all mt-3">Register</a>
+            </div>
+            <div class="mt-auto pt-8 border-t border-border">
+                <p class="text-[10px] uppercase tracking-widest font-black text-text-muted mb-4 text-center">Connected
+                    to Enterprise RAG</p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- HERO -->
+    <section class="public-hero home-hero">
+        <div class="max-w-7xl mx-auto px-6 w-full">
+            <div class="home-copy">
+                <div class="hero-content">
+                    <h1 class="text-5xl md:text-6xl font-black leading-[1.08] mb-5 tracking-tight">Your documents.<br><span class="gt">Clearer answers.</span></h1>
+                    <p class="text-lg md:text-xl text-text-muted leading-relaxed mb-7 max-w-2xl">Bring your team documents together, ask questions in plain language, and follow answers back to their sources.</p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="login.html"
+                            class="bg-primary hover:bg-primary-hover text-white px-8 py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-3">Open your workspace <i class="fa-solid fa-arrow-right"></i></a>
+                        <a href="contact.html"
+                            class="glass text-text-main px-8 py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-3 hover:bg-gray-50 dark:hover:bg-slate-800">Talk to our team</a>
+                    </div>
+                    <p class="hero-note">Document search <span>·</span> Source-linked responses <span>·</span> Personal and enterprise workspaces</p>
+                </div>
+                <figure class="hero-media">
+                    <img src="images/team-collaboration.jpg" alt="Colleagues reviewing information together around a table" fetchpriority="high">
+                    <figcaption>Make the knowledge in your documents easier to use.</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="z1 py-24 home-how">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4 border border-primary/20">
+                    <i class="fa-solid fa-diagram-project text-xs"></i> How It Works</div>
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-4">From Upload to Answer in <span class="gt">3
+                        Steps</span></h2>
+                <p class="text-text-muted text-xl max-w-2xl mx-auto">Add your documents, ask a question, and review the passages behind each response.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                <div class="card p-8 c3d text-center gw fl">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl mx-auto mb-6 shadow-lg shadow-blue-500/20">
+                        <i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 text-white text-sm font-bold mb-4">
+                        1</div>
+                    <h3 class="text-xl font-bold mb-3">Upload Documents</h3>
+                    <p class="text-text-muted leading-relaxed">Add supported files to your workspace. ENTRAG prepares their text for search.</p>
+                </div>
+                <div class="card p-8 c3d text-center gw fl2">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-2xl mx-auto mb-6 shadow-lg shadow-purple-500/20">
+                        <i class="fa-solid fa-magnifying-glass"></i></div>
+                    <div
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 text-white text-sm font-bold mb-4">
+                        2</div>
+                    <h3 class="text-xl font-bold mb-3">Ask Anything</h3>
+                    <p class="text-text-muted leading-relaxed">Type a question in natural language to retrieve relevant passages from your documents.</p>
+                </div>
+                <div class="card p-8 c3d text-center gw fl3">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-2xl mx-auto mb-6 shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-comments"></i></div>
+                    <div
+                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500 text-white text-sm font-bold mb-4">
+                        3</div>
+                    <h3 class="text-xl font-bold mb-3">Get Cited Answers</h3>
+                    <p class="text-text-muted leading-relaxed">The answer is drafted from retrieved passages, with source references to help you verify it.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section class="z1 py-24 bg-black/5 dark:bg-white/5 border-y border-border architecture-section">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 items-center">
                 <div>
-                    <h1 class="hero-serif text-[3.1rem] leading-[0.95] tracking-[-0.05em] text-[#20312f] md:text-[4.5rem]">Turn company documents into answers your team can trust.</h1>
-                    <p class="mt-6 max-w-[560px] text-xl leading-8 text-[#60716f]">
-                        Ask questions across HR policies, stakeholder agreements, finance procedures, and IT documentation. Nexus retrieves relevant passages and uses them to shape a focused answer.
-                    </p>
-                    <div class="mt-8 flex flex-wrap gap-4">
-                        <a href="register.html" class="btn-primary px-7 py-4 text-base">Get started</a>
-                        <a href="models.html" class="rounded-xl border border-border bg-white px-7 py-4 text-base font-semibold text-[#20312f]">Explore the platform</a>
-                    </div>
-                    <div class="mt-8 flex items-start gap-3 text-[#60716f]">
-                        <span class="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f0f1ff] text-[0.7rem] text-primary">i</span>
-                        <p class="max-w-[420px] text-sm leading-6">Answers are grounded in your organization's documents. Your team stays in control of every decision.</p>
-                    </div>
-                </div>
-                <div class="relative mx-auto w-full max-w-[740px]">
-                    <div class="absolute inset-0 rounded-[2.5rem] bg-[#dce6e3] blur-[80px]"></div>
-                    <div class="relative overflow-hidden rounded-[2.5rem] border border-[#dce6e3] bg-white p-3 shadow-[0_30px_70px_rgba(13,93,90,0.12)]">
-                        <div class="overflow-hidden rounded-[2rem] bg-[#e8efed]">
-                            <img src="images/contract-discussion.webp" alt="Colleagues discussing a document together in a meeting" class="h-[540px] w-full object-cover" />
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4 border border-primary/20">
+                        <i class="fa-solid fa-server text-xs"></i> Architecture</div>
+                    <h2 class="text-4xl font-extrabold mb-4">Built on a <span class="gt">RAG Pipeline</span></h2>
+                    <p class="text-text-muted text-lg leading-relaxed mb-8">ENTRAG follows the Retrieval-Augmented
+                        Generation pattern, combining the precision of vector search with the fluency of large language
+                        models.</p>
+                    <div class="space-y-4">
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-primary"><i
+                                class="fa-solid fa-database text-primary text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Document Store</h4>
+                                <p class="text-text-muted text-sm">MySQL stores account and document metadata used by the application.</p>
+                            </div>
                         </div>
-
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-purple-500"><i
+                                class="fa-solid fa-cube text-purple-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Embedding Engine</h4>
+                                <p class="text-text-muted text-sm">Gemini embeddings represent document passages for semantic retrieval.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-blue-500"><i
+                                class="fa-solid fa-bolt text-blue-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">Chroma vector store</h4>
+                                <p class="text-text-muted text-sm">Chroma keeps the document vectors used to retrieve relevant passages for each question.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-4 p-4 card rounded-xl border-l-4 border-emerald-500"><i
+                                class="fa-solid fa-brain text-emerald-500 text-lg mt-0.5"></i>
+                            <div>
+                                <h4 class="font-bold mb-1">LLM Synthesis</h4>
+                                <p class="text-text-muted text-sm">The configured Gemini model uses retrieved context to draft an answer with source references.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="border-y border-[#dce6e3] bg-white/70">
-            <div class="mx-auto max-w-[1840px] px-6 py-20 lg:px-8">
-                <p class="text-sm font-bold uppercase tracking-[.18em] text-primary">A clear path from documents to answers</p>
-                <h2 class="mt-4 max-w-[700px] font-serif text-4xl leading-tight tracking-tight text-[#20312f]">From source files to useful, reviewable knowledge.</h2>
-                <div class="mt-10 grid gap-6 md:grid-cols-3">
-                    <article class="rounded-2xl border border-border bg-white p-7"><span class="text-sm font-bold text-primary">01 / Prepare</span><h3 class="mt-5 text-xl font-semibold">Add your team's documents</h3><p class="mt-3 leading-7 text-[#60716f]">Upload policies, agreements, handbooks, and technical guides in PDF, DOCX, TXT, or CSV format.</p></article>
-                    <article class="rounded-2xl border border-border bg-white p-7"><span class="text-sm font-bold text-primary">02 / Explore</span><h3 class="mt-5 text-xl font-semibold">Ask in everyday language</h3><p class="mt-3 leading-7 text-[#60716f]">Search across enterprise and personal document collections to find the guidance relevant to your question.</p></article>
-                    <article class="rounded-2xl border border-border bg-white p-7"><span class="text-sm font-bold text-primary">03 / Discuss</span><h3 class="mt-5 text-xl font-semibold">Review answers with sources</h3><p class="mt-3 leading-7 text-[#60716f]">Use a retrieved answer as a starting point, then verify its source passages, document version, and context before acting.</p></article>
+    <!-- CORE CAPABILITIES -->
+    <section class="z1 py-16">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 capability-grid">
+                <div class="card p-6">
+                    <p class="font-bold mb-1">Document questions</p>
+                    <p class="text-text-muted text-sm">Ask about the files in your workspace.</p>
+                </div>
+                <div class="card p-6">
+                    <p class="font-bold mb-1">Source citations</p>
+                    <p class="text-text-muted text-sm">Check which documents support an answer.</p>
+                </div>
+                <div class="card p-6">
+                    <p class="font-bold mb-1">Private conversations</p>
+                    <p class="text-text-muted text-sm">Keep each user's chat history separate.</p>
+                </div>
+                <div class="card p-6">
+                    <p class="font-bold mb-1">Model configuration</p>
+                    <p class="text-text-muted text-sm">Use the provider configured for the workspace.</p>
                 </div>
             </div>
-        </section>
-        <section class="mx-auto grid max-w-[1840px] items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:px-8">
-            <div><p class="text-sm font-bold uppercase tracking-[.18em] text-primary">Knowledge that works across teams</p><h2 class="mt-4 font-serif text-4xl leading-tight tracking-tight">Give every team a faster way to find the right internal guidance.</h2><p class="mt-5 max-w-xl text-lg leading-8 text-[#60716f]">Nexus RAG brings scattered company knowledge into one searchable workspace. Employees can ask about policies and procedures; admins can manage the shared library while users work with their own documents.</p></div>
-            <div class="grid gap-4 sm:grid-cols-2"><div class="rounded-2xl bg-[#f0f1ff] p-6"><h3 class="font-semibold">HR and people policies</h3><p class="mt-2 leading-6 text-[#60716f]">Find leave, onboarding, benefits, and workplace guidance.</p></div><div class="rounded-2xl bg-[#f0f1ff] p-6"><h3 class="font-semibold">Agreements and stakeholder docs</h3><p class="mt-2 leading-6 text-[#60716f]">Retrieve terms, decisions, and commitments from shared documents.</p></div><div class="rounded-2xl bg-[#f0f1ff] p-6"><h3 class="font-semibold">Finance and operations</h3><p class="mt-2 leading-6 text-[#60716f]">Find expense rules, approval limits, and operating procedures.</p></div><div class="rounded-2xl bg-[#f0f1ff] p-6"><h3 class="font-semibold">IT and security knowledge</h3><p class="mt-2 leading-6 text-[#60716f]">Search access guides, runbooks, and security policies.</p></div></div>
-        </section>
-        <section class="bg-[#1e1b4b] text-white"><div class="mx-auto flex max-w-[1840px] flex-col items-start gap-8 px-6 py-16 lg:flex-row lg:items-center lg:justify-between lg:px-8"><div><p class="text-sm font-bold uppercase tracking-[.18em] text-white/65">Built for the knowledge your teams use every day</p><h2 class="mt-3 max-w-2xl font-serif text-4xl leading-tight">Explore document search, grounded answers, and scoped knowledge collections.</h2></div><a href="features.html" class="rounded-xl bg-white px-6 py-4 font-semibold text-[#1e1b4b]">View platform features &rarr;</a></div></section>
-    </main>
+        </div>
+    </section>
 
-    <footer class="bg-[#111827] text-white">
-        <div class="mx-auto grid max-w-[1840px] gap-10 px-6 py-14 md:grid-cols-4 lg:px-8">
-            <div>
-                <div class="mb-5 flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white font-bold text-[#111827]">N</div>
-                    <span class="text-2xl font-semibold">Nexus RAG</span>
+    <!-- USE CASES -->
+    <section class="z1 py-24 bg-black/5 dark:bg-white/5 border-y border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 text-purple-600 text-sm font-semibold mb-4 border border-purple-200 dark:border-purple-800">
+                    <i class="fa-solid fa-briefcase text-xs"></i> Use Cases</div>
+                <h2 class="text-4xl md:text-5xl font-extrabold mb-4">Built for <span class="gt">Every Industry</span>
+                </h2>
+                <p class="text-text-muted text-xl max-w-2xl mx-auto">Organize the information your team needs to work with every day.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="card p-6 c3d gw fl">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-gavel"></i></div>
+                    <h3 class="font-bold mb-2">Legal</h3>
+                    <p class="text-text-muted text-sm">Search case law, contracts, and compliance policies. Find
+                        precedents and clauses in seconds instead of hours.</p>
                 </div>
-                <p class="max-w-xs text-white/70">A document-grounded assistant for the knowledge your teams rely on.</p>
+                <div class="card p-6 c3d gw fl2">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-hospital"></i></div>
+                    <h3 class="font-bold mb-2">Healthcare</h3>
+                    <p class="text-text-muted text-sm">Query clinical protocols, drug interactions, and patient care
+                        guidelines with HIPAA-grade security.</p>
+                </div>
+                <div class="card p-6 c3d gw fl3">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-chart-line"></i></div>
+                    <h3 class="font-bold mb-2">Finance</h3>
+                    <p class="text-text-muted text-sm">Audit trail queries, regulatory document retrieval, and risk
+                        assessment from internal reports.</p>
+                </div>
+                <div class="card p-6 c3d gw fl">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl mb-4">
+                        <i class="fa-solid fa-code"></i></div>
+                    <h3 class="font-bold mb-2">Engineering</h3>
+                    <p class="text-text-muted text-sm">Search technical docs, API specs, and architecture decisions.
+                        Onboard new engineers 10x faster.</p>
+                </div>
             </div>
-            <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Quick links</h3>
-                <ul class="space-y-3 text-white/80">
-                    <li><a href="index.html">Home</a></li>
-                    <li><a href="features.html">Platform</a></li>
-                    <li><a href="models.html">Use cases</a></li>
-                    <li><a href="contact.html">Contact</a></li>
-                </ul>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="z1 py-24 bg-gradient-to-r from-primary to-orange-400 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+            <div class="absolute bottom-10 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-4xl md:text-5xl font-black text-white mb-6">Stop Searching.<br>Start Finding.</h2>
+            <p class="text-white/80 text-xl mb-10 max-w-2xl mx-auto">Deploy ENTRAG in under 30 minutes and give your
+                entire organization instant access to the knowledge locked inside your documents.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="login.html"
+                    class="bg-white text-primary font-bold px-10 py-4 rounded-xl transition-all hover:scale-105 shadow-xl text-lg">Get
+                    Started Free</a>
+                <a href="contact.html"
+                    class="border-2 border-white/50 text-white font-bold px-10 py-4 rounded-xl transition-all hover:border-white hover:scale-105 text-lg">Talk
+                    to Sales</a>
             </div>
-            <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Contact</h3>
-                <ul class="space-y-3 text-white/80">
-                    <li>Anuj Singh</li>
-                    <li><a href="mailto:anujsingh41086@gmail.com">anujsingh41086@gmail.com</a></li>
-                    <li>Noida Sector 40, UP</li>
-                </ul>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="z1 py-14 border-t border-border">
+        <div class="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+                <div>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white">
+                            <i class="fa-solid fa-brain text-sm"></i></div>
+                        <span class="font-bold text-lg">ENTRAG</span>
+                    </div>
+                    <p class="text-text-muted text-sm leading-relaxed">Enterprise AI Knowledge Platform. Chat with your
+                        internal documents and get cited answers.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider">Product</h4>
+                    <ul class="space-y-2 text-text-muted text-sm">
+                        <li><a href="features.html" class="hover:text-primary transition-colors">Features</a></li>
+                        <li><a href="models.html" class="hover:text-primary transition-colors">AI Models</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Pricing</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Changelog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider">Company</h4>
+                    <ul class="space-y-2 text-text-muted text-sm">
+                        <li><a href="#" class="hover:text-primary transition-colors">About</a></li>
+                        <li><a href="contact.html" class="hover:text-primary transition-colors">Contact</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Careers</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Blog</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4 text-sm uppercase tracking-wider">Legal</h4>
+                    <ul class="space-y-2 text-text-muted text-sm">
+                        <li><a href="#" class="hover:text-primary transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">SOC 2 Report</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">GDPR</a></li>
+                    </ul>
+                </div>
             </div>
-            <div>
-                <h3 class="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-white/60">Get in touch</h3>
-                <a class="text-white/80 hover:text-white" href="mailto:anujsingh41086@gmail.com">Email Nexus RAG</a>
+            <div class="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-text-muted text-sm">&copy; 2026 Enterprise RAG Platform. All rights reserved.</p>
+                <div class="flex gap-4 text-text-muted">
+                    <a href="#" class="hover:text-primary transition-colors"><i
+                            class="fa-brands fa-twitter text-lg"></i></a>
+                    <a href="#" class="hover:text-primary transition-colors"><i
+                            class="fa-brands fa-github text-lg"></i></a>
+                    <a href="#" class="hover:text-primary transition-colors"><i
+                            class="fa-brands fa-linkedin text-lg"></i></a>
+                </div>
             </div>
         </div>
     </footer>
+
 </body>
+
 </html>

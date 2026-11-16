@@ -1,16 +1,13 @@
 
 import os
-import mysql.connector
 import hashlib
+from dotenv import load_dotenv
 
-# Database Configuration
-DB_HOST = 'localhost'
-DB_USER = 'root'
-DB_PASSWORD = 'Ishan@1423'
-DB_NAME = 'defaultdb'
-DB_PORT = 3306
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
-BASE_DIR = r"c:\Users\Ishaan\Documents\nexus-rag-engine-main"
+from database import DB_NAME, get_db_connection
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_CHROMA_PATH = os.path.join(BASE_DIR, "storage", "chroma")
 
 def get_index_path(scope: str = "global", user_email: str = None) -> str:
@@ -23,13 +20,7 @@ def get_index_path(scope: str = "global", user_email: str = None) -> str:
 
 def check_status():
     try:
-        conn = mysql.connector.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            port=DB_PORT,
-            database=DB_NAME
-        )
+        conn = get_db_connection(DB_NAME)
         cursor = conn.cursor()
         
         print("Checking documents table...")

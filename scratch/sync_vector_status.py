@@ -1,48 +1,53 @@
-
 import os
-import mysql.connector
-import hashlib
+import sys
+from pathlib import Path
 
-# Configuration
-DB_USER = "root"
-DB_PASSWORD = "Ishan@1423"
-DB_NAME = "defaultdb"
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_CHROMA_PATH = os.path.join(BASE_DIR, "storage", "chroma")
+BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
+sys.path.insert(0, str(BACKEND_DIR))
 
-def get_index_path(scope, user_email=None):
-    if scope == "global":
-        return os.path.join(BASE_CHROMA_PATH, "global")
-    email_hash = hashlib.md5(user_email.lower().encode()).hexdigest()
-    return os.path.join(BASE_CHROMA_PATH, "users", email_hash)
+from dotenv import load_dotenv
+
+load_dotenv(BACKEND_DIR / ".env")
+
+from database import DB_NAME, get_db_connection
+from rag import get_index_path
+
 
 def sync_status():
     try:
-        conn = mysql.connector.connect(host="localhost", user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
+        conn = get_db_connection(DB_NAME)
         cursor = conn.cursor()
-        
+
         cursor.execute("SELECT id, filename, owner_email, scope, status FROM documents WHERE status = 'ready'")
         docs = cursor.fetchall()
-        
+
         print(f"Checking {len(docs)} 'ready' documents...")
-        
+
         for doc_id, filename, email, scope, status in docs:
             path = get_index_path(scope, email)
-            # Check if directory exists and has chroma data
-            exists = os.path.exists(path) and any(f.endswith('.sqlite3') for f in os.listdir(path)) if os.path.exists(path) else False
-            
+            exists = (
+                os.path.exists(path)
+                and any(entry.endswith(".sqlite3") for entry in os.listdir(path))
+                if os.path.exists(path)
+                else False
+            )
+
             if not exists:
-                print(f"FIX: Document {doc_id} ('{filename}') is marked 'ready' but vector data is MISSING at {path}. Marking as 'failed'.")
-                cursor.execute("UPDATE documents SET status = 'failed', error_message = 'Vector data missing. Please re-upload.' WHERE id = %s", (doc_id,))
+                print(f"FIX: Document {doc_id} ('{filename}') is marked 'ready' but vector data is missing. Marking it as failed.")
+                cursor.execute(
+                    "UPDATE documents SET status = 'failed', error_message = 'Vector data missing. Please re-upload.' WHERE id = %s",
+                    (doc_id,),
+                )
             else:
-                print(f"OK: Document {doc_id} ('{filename}') has vector data at {path}.")
-                
+                print(f"OK: Document {doc_id} ('{filename}') has vector data.")
+
         conn.commit()
         cursor.close()
         conn.close()
         print("Sync complete.")
-    except Exception as e:
-        print(f"Error: {e}")
+    except Exception as error:
+        print(f"Error: {error}")
+
 
 if __name__ == "__main__":
     sync_status()

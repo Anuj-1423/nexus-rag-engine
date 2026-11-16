@@ -1,41 +1,45 @@
 # Nexus RAG Engine
 
-Nexus is a document based conversation workspace for finding and discussing internal knowledge. Teams can use it to search HR policies, IT runbooks, finance procedures, stakeholder agreements, and other company documents, then review answers against the retrieved source material.
+Nexus is a document-based knowledge assistant. It indexes uploaded files and answers questions using the relevant enterprise or personal documents.
 
-## Capabilities
+## Requirements
 
-- Upload and query PDF, DOCX, DOC, TXT, and Markdown documents (the application upload route currently also accepts CSV).
-- Hybrid lexical and semantic retrieval with document chunking and reranking.
-- Shared and personal document collections, with user and administrator workflows.
-- A FastAPI backend that also serves the bundled frontend and its local images.
-
-## Run locally
-
-Install Python dependencies and start the API from the backend directory:
-
-```bash
-cd backend
-pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8000
-```
-
-Open [http://localhost:8000/](http://localhost:8000/) for the website. The frontend pages and files in `frontend/images/` are served by the same backend, so deployed pages do not depend on third party image URLs.
+- Python 3.10 or later
+- MySQL
+- A Google AI API key for embeddings and answer generation
+- A Cohere API key is optional; retrieval uses a local reranking fallback when it is not configured
 
 ## Configuration
 
-Set configuration in the deployment environment rather than committing secrets:
+Create `backend/.env` with the settings for your environment. Keep this file private; it is ignored by Git.
 
-| Variable | Purpose |
-| --- | --- |
-| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | MySQL connection |
-| `JWT_SECRET` or `APP_SECRET_KEY` | Signing authentication tokens; set a long random value |
-| `GOOGLE_API_KEY` | Gemini response generation |
-| `GEMINI_MODEL` | Optional model override |
-| `COHERE_API_KEY` | Optional reranking service; lexical fallback is used if absent |
-| `USE_LOCAL_EMBEDDINGS` | Set to `true` to use local embeddings |
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=defaultdb
+DB_PORT=3306
+GOOGLE_API_KEY=your-google-ai-api-key
+COHERE_API_KEY=
+JWT_SECRET=replace-with-a-private-random-secret
+```
 
-Ensure the database is reachable from the application host and that Chroma storage is writable by the process. For production, configure TLS at the hosting layer and use managed secrets and persistent storage.
+The application initializes its database and tables when the backend starts. Use credentials that have permission to connect to MySQL and create the configured database, or create it beforehand.
 
-## Deployment notes
+## Install and run
 
-The web interface and API are served together by FastAPI. Configure the host to run the Uvicorn command above (without `--reload` in production), provide the environment variables, and attach persistent storage for the document index. Keep credentials out of source control and rotate any credential that has previously been committed or shared.
+From the repository root, create and activate a virtual environment, then install the backend dependencies:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+The backend serves the frontend as well. Open <http://127.0.0.1:8000/> for the website, or <http://127.0.0.1:8000/docs> for the API documentation.
+
+## Supported uploads
+
+PDF, DOCX, TXT, and CSV documents are supported.
