@@ -5,6 +5,7 @@ import time
 from collections import Counter
 from typing import Optional, List
 import hashlib
+import requests
 
 from google import genai
 from langchain_core.embeddings import Embeddings
@@ -36,13 +37,10 @@ logger = logging.getLogger(__name__)
 # Configuration: OpenRouter (Free) + Local Embeddings
 # ---------------------------------------------------------------------------
 
-# LLM: Gemini 3.8 Flash
-LLM_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
-GENERATION_MODELS = tuple(dict.fromkeys([
-    LLM_MODEL,
-    "gemini-3.8-flash",
-    "gemini-3.5-flash-lite",
-]))
+# Groq is the primary text-generation provider; Gemini remains the fallback.
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+LLM_MODEL = GEMINI_FALLBACK_MODEL
 
 # Retrieval settings tuned for precision-first retrieval
 RETRIEVAL_K = 12
@@ -231,7 +229,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             return self._llm_model
             
         # Preference order for models
-        preference = GENERATION_MODELS
+        preference = [GEMINI_FALLBACK_MODEL]
         
         for model_name in preference:
             try:
@@ -311,6 +309,36 @@ def get_embeddings():
         logger.info("Initializing Official Google AI Embeddings SDK...")
         _hf_embeddings = GoogleAIEmbeddingsOfficial()
     return _hf_embeddings
+
+
+def generate_with_groq(api_key: str, system_prompt: str, query: str) -> str:
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": GROQ_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Question: {query}"},
+            ],
+            "max_completion_tokens": 1024,
+            "temperature": 0.2,
+        },
+        timeout=45,
+    )
+    response.raise_for_status()
+    choices = response.json().get("choices") or []
+    if not choices:
+        raise ValueError("Groq returned no completion choices.")
+    message = choices[0].get("message") or {}
+    answer = message.get("content")
+    if not isinstance(answer, str) or not answer.strip():
+        raise ValueError("Groq returned an empty text completion.")
+    return answer.strip()
+
 
 # ---------------------------------------------------------------------------
 # Document Ingestion Pipeline
@@ -588,9 +616,6 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
     if not api_key:
         raise ValueError("AI Engine Error: GOOGLE_API_KEY missing.")
 
-    # Lazy load client
-    client = genai.Client(api_key=api_key)
-
     # Step 1: Retrieve (Now Async)
     try:
         ranked_results = await retrieve_context(query, mode, user_email)
@@ -660,52 +685,64 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
 
     system_prompt += "\n\nContext Documents (Use ONLY relevant parts):\n" + context_str
 
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key:
+        try:
+            answer = await asyncio.to_thread(
+                generate_with_groq,
+                groq_api_key,
+                system_prompt,
+                query,
+            )
+            result = {
+                "answer": answer,
+                "sources": sources if asks_for_sources else [],
+                "model": GROQ_MODEL,
+                "provider": "groq",
+                "cached": False,
+            }
+            _query_cache[cache_key] = result
+            trim_query_cache()
+            await asyncio.to_thread(save_cache)
+            return result
+        except Exception as exc:
+            logger.warning("Groq generation failed; trying Gemini fallback: %s", exc)
+    else:
+        logger.info("GROQ_API_KEY is not configured; using Gemini fallback.")
+
+    client = genai.Client(api_key=api_key)
     last_error = None
-    for active_model in GENERATION_MODELS:
-        max_retries = 2 # Per model
-        for attempt in range(max_retries):
-            try:
-                # Use asyncio.to_thread for the blocking Google GenAI call
-                response = await asyncio.to_thread(
-                    client.models.generate_content,
-                    model=active_model,
-                    config={"system_instruction": system_prompt},
-                    contents=f"Question: {query}"
-                )
-                answer = response.text
-                
-                result = {
-                    "answer": answer,
-                    "sources": sources if asks_for_sources else [],
-                    "model": active_model,
-                    "cached": False
-                }
-                
-                # Save to cache
-                _query_cache[cache_key] = result
-                trim_query_cache()
-                await asyncio.to_thread(save_cache)
-                
-                return result
-                
-            except Exception as e:
-                err_msg = str(e)
-                last_error = e
-                # Handle both 429 (Rate Limit/Quota) and 503 (Service Unavailable/High Demand)
-                if ("429" in err_msg or "503" in err_msg):
-                    if attempt < max_retries - 1:
-                        wait_time = (attempt + 1) * 2
-                        logger.warning(f"API busy ({'429' if '429' in err_msg else '503'}) on {active_model}. Retrying in {wait_time}s... (Attempt {attempt+1}/{max_retries})")
-                        await asyncio.sleep(wait_time)
-                        continue
-                    else:
-                        logger.warning(f"Model {active_model} exhausted. Switching to next model...")
-                        break # Try next model
-                else:
-                    # Non-retryable error
-                    logger.error(f"Google GenAI generation failed on {active_model}: {e}")
-                    break # Try next model
-    
+    for attempt in range(2):
+        try:
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=GEMINI_FALLBACK_MODEL,
+                config={"system_instruction": system_prompt},
+                contents=f"Question: {query}",
+            )
+            answer = (response.text or "").strip()
+            if not answer:
+                raise ValueError(f"{GEMINI_FALLBACK_MODEL} returned an empty text completion.")
+            result = {
+                "answer": answer,
+                "sources": sources if asks_for_sources else [],
+                "model": GEMINI_FALLBACK_MODEL,
+                "provider": "gemini",
+                "cached": False,
+            }
+            _query_cache[cache_key] = result
+            trim_query_cache()
+            await asyncio.to_thread(save_cache)
+            return result
+        except Exception as exc:
+            last_error = exc
+            err_msg = str(exc)
+            if ("429" in err_msg or "503" in err_msg) and attempt == 0:
+                logger.warning("Gemini fallback is temporarily busy; retrying once.")
+                await asyncio.sleep(2)
+                continue
+            logger.error("Gemini fallback generation failed on %s: %s", GEMINI_FALLBACK_MODEL, exc)
+
     return {"answer": f"Error generating answer: {str(last_error)}", "sources": []}
 
 def ingest_text(text: str, meta: dict):
