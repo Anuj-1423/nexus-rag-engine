@@ -50,10 +50,19 @@ RERANK_TOP_N = 5
 MAX_QUERY_CACHE_ITEMS = 200
 MAX_BM25_CACHE_ITEMS = 4
 
-# Use absolute paths for reliability
+# Use the writable temporary directory for serverless runtime data.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_QDRANT_PATH = os.path.join(BASE_DIR, "storage", "qdrant")
-CACHE_PATH = os.path.join(BASE_DIR, "storage", "query_cache.json")
+
+
+def get_runtime_storage_dir() -> str:
+    if os.getenv("VERCEL") == "1":
+        return os.path.join("/tmp", "nexus-rag")
+    return os.path.join(BASE_DIR, "storage")
+
+
+RUNTIME_STORAGE_DIR = get_runtime_storage_dir()
+BASE_QDRANT_PATH = os.path.join(RUNTIME_STORAGE_DIR, "qdrant")
+CACHE_PATH = os.path.join(RUNTIME_STORAGE_DIR, "query_cache.json")
 
 # Enhancement #8: Query Cache
 _query_cache = {}
