@@ -70,6 +70,21 @@ async def test_rag_retrieval_logic():
         assert {doc.metadata["scope"] for doc, _ in admin_combined} == {"global", "personal"}
 
         scopes_searched.clear()
+        admin_enterprise = await retrieve_context(
+            mock_query,
+            mode="enterprise",
+            user_email="admin@example.com",
+            is_admin=True,
+            personal_emails=owner_emails,
+        )
+        assert set(scopes_searched) == {
+            ("global", None),
+            ("personal", "first@example.com"),
+            ("personal", "second@example.com"),
+        }
+        assert {doc.metadata["scope"] for doc, _ in admin_enterprise} == {"global", "personal"}
+
+        scopes_searched.clear()
         await retrieve_context(
             mock_query,
             mode="personal",
@@ -79,7 +94,7 @@ async def test_rag_retrieval_logic():
         )
         assert scopes_searched == [("personal", "admin@example.com")]
 
-    print("Retrieval scope checks passed: personal=user-only, enterprise=shared, combined=both")
+    print("Retrieval scope checks passed: users are scoped correctly; admin enterprise/combined include all user indexes")
 
 if __name__ == "__main__":
     asyncio.run(test_rag_retrieval_logic())

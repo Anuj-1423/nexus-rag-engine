@@ -605,6 +605,13 @@ async def retrieve_context(
             personal_path = get_index_identifier("personal", email)
             indices_to_search.append((personal_path, "personal", email))
 
+    # Enterprise is the admin's default workspace. Include every user's ready
+    # personal index for admins, while regular users see shared docs only.
+    elif is_admin:
+        for email in dict.fromkeys(personal_emails or []):
+            personal_path = get_index_identifier("personal", email)
+            indices_to_search.append((personal_path, "personal", email))
+
     if not indices_to_search:
         # Avoid NameError by ensuring paths are defined
         g_path = get_index_identifier("global")

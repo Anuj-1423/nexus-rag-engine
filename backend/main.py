@@ -326,7 +326,7 @@ async def ask_question(data: AskRequest, current_user: dict = Depends(get_curren
 
         is_admin = current_user.get("role") == "admin"
         personal_emails = None
-        if is_admin and data.mode == "combined":
+        if is_admin and data.mode in {"enterprise", "combined"}:
             await asyncio.to_thread(
                 cursor.execute,
                 "SELECT DISTINCT owner_email FROM documents WHERE scope = 'personal' AND status = 'ready' AND owner_email IS NOT NULL",
