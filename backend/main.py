@@ -324,7 +324,23 @@ async def ask_question(data: AskRequest, current_user: dict = Depends(get_curren
         history_rows = cursor.fetchall()
         chat_history = [{"question": r[0], "answer": r[1]} for r in history_rows]
 
-        res = await generate_rag_response(data.question, mode=data.mode, user_email=data.email, chat_history=chat_history)
+        is_admin = current_user.get("role") == "admin"
+        personal_emails = None
+        if is_admin and data.mode == "combined":
+            await asyncio.to_thread(
+                cursor.execute,
+                "SELECT DISTINCT owner_email FROM documents WHERE scope = 'personal' AND status = 'ready' AND owner_email IS NOT NULL",
+            )
+            personal_emails = [row[0] for row in cursor.fetchall()]
+
+        res = await generate_rag_response(
+            data.question,
+            mode=data.mode,
+            user_email=data.email,
+            chat_history=chat_history,
+            is_admin=is_admin,
+            personal_emails=personal_emails,
+        )
         
         await asyncio.to_thread(
             cursor.execute,

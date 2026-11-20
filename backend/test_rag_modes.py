@@ -44,9 +44,8 @@ async def test_rag_retrieval_logic():
 
         scopes_searched.clear()
         personal = await retrieve_context(mock_query, mode="personal", user_email=mock_user_email)
-        assert [scope for scope, _ in scopes_searched] == ["personal"]
-        assert scopes_searched[0][1] == mock_user_email
-        assert {doc.metadata["scope"] for doc, _ in personal} == {"personal"}
+        assert set(scopes_searched) == {("global", None), ("personal", mock_user_email)}
+        assert {doc.metadata["scope"] for doc, _ in personal} == {"global", "personal"}
 
         scopes_searched.clear()
         combined = await retrieve_context(mock_query, mode="combined", user_email=mock_user_email)
@@ -54,7 +53,36 @@ async def test_rag_retrieval_logic():
         assert any(scope == "personal" and email == mock_user_email for scope, email in scopes_searched)
         assert {doc.metadata["scope"] for doc, _ in combined} == {"global", "personal"}
 
-    print("Retrieval scope checks passed: enterprise=global, personal=user-only, combined=global+user")
+        scopes_searched.clear()
+        owner_emails = ["first@example.com", "second@example.com"]
+        admin_combined = await retrieve_context(
+            mock_query,
+            mode="combined",
+            user_email="admin@example.com",
+            is_admin=True,
+            personal_emails=owner_emails,
+        )
+        assert set(scopes_searched) == {
+            ("global", None),
+            ("personal", "first@example.com"),
+            ("personal", "second@example.com"),
+        }
+        assert {doc.metadata["scope"] for doc, _ in admin_combined} == {"global", "personal"}
+
+        scopes_searched.clear()
+        await retrieve_context(
+            mock_query,
+            mode="personal",
+            user_email="admin@example.com",
+            is_admin=True,
+            personal_emails=owner_emails,
+        )
+        assert set(scopes_searched) == {
+            ("global", None),
+            ("personal", "admin@example.com"),
+        }
+
+    print("Retrieval scope checks passed: shared docs are included; admins can combine all personal indexes")
 
 if __name__ == "__main__":
     asyncio.run(test_rag_retrieval_logic())

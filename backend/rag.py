@@ -161,7 +161,13 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             raise ValueError(
                 "GOOGLE_EMBEDDING_API_KEY or GOOGLE_API_KEY is missing from the environment."
             )
-        self.client = genai.Client(api_key=api_key)
+        self.client = genai.Client(
+            api_key=api_key,
+            http_options=genai.types.HttpOptions(
+                client_args={"trust_env": False},
+                async_client_args={"trust_env": False},
+            ),
+        )
         self.model_candidates = [
             "gemini-embedding-001",
         ]
@@ -571,30 +577,32 @@ async def hybrid_search(query: str, db: QdrantVectorStore, index_path: str, k: i
 
     return final_docs
 
-async def retrieve_context(query: str, mode: str = "combined", user_email: Optional[str] = None, filters: dict = None) -> list:
-    """Enhanced retrieval with explicit support for Enterprise, Personal, and Combined modes."""
-    
-    indices_to_search = []
-    
-    # 1. ENTERPRISE Mode: Only Global Admin Documents
-    if mode == "enterprise":
-        global_path = get_index_identifier("global")
-        indices_to_search.append((global_path, "global"))
+async def retrieve_context(
+    query: str,
+    mode: str = "combined",
+    user_email: Optional[str] = None,
+    filters: dict = None,
+    *,
+    is_admin: bool = False,
+    personal_emails: Optional[List[str]] = None,
+) -> list:
+    """Search shared documents and the private indexes allowed for this caller."""
 
-    # 2. PERSONAL Mode: Only User's Private Documents
-    elif mode == "personal":
-        if user_email:
-            personal_path = get_index_identifier("personal", user_email)
-            indices_to_search.append((personal_path, "personal"))
+    # Shared enterprise documents are visible in every mode. Enterprise mode
+    # searches only shared documents; personal/combined also search private data.
+    global_path = get_index_identifier("global")
+    indices_to_search = [(global_path, "global", None)]
+    if mode != "enterprise":
+        # Admin combined chat can query every user's private index. Regular
+        # users are always limited to their own private index.
+        if mode == "combined" and is_admin:
+            emails = personal_emails or []
+        else:
+            emails = [user_email] if user_email else []
 
-    # 3. COMBINED Mode: Both Global and Personal (Default)
-    else: # combined
-        global_path = get_index_identifier("global")
-        indices_to_search.append((global_path, "global"))
-            
-        if user_email:
-            personal_path = get_index_identifier("personal", user_email)
-            indices_to_search.append((personal_path, "personal"))
+        for email in dict.fromkeys(emails):
+            personal_path = get_index_identifier("personal", email)
+            indices_to_search.append((personal_path, "personal", email))
 
     if not indices_to_search:
         # Avoid NameError by ensuring paths are defined
@@ -605,9 +613,9 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
 
     emb = await asyncio.to_thread(get_embeddings)
     
-    async def search_index(path, scope):
+    async def search_index(path, scope, owner_email):
         try:
-            db = await asyncio.to_thread(get_vector_store, scope, user_email if scope == "personal" else None, emb)
+            db = await asyncio.to_thread(get_vector_store, scope, owner_email, emb)
             if not await asyncio.to_thread(db.collection_exists):
                 return []
             candidates = await hybrid_search(query, db, path, k=RETRIEVAL_K)
@@ -620,7 +628,10 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
             return []
 
     # Search all relevant indices in parallel
-    results = await asyncio.gather(*[search_index(path, scope) for path, scope in indices_to_search])
+    results = await asyncio.gather(*[
+        search_index(path, scope, owner_email)
+        for path, scope, owner_email in indices_to_search
+    ])
 
     all_candidates = []
     for candidates in results:
@@ -642,12 +653,23 @@ async def retrieve_context(query: str, mode: str = "combined", user_email: Optio
     return await asyncio.to_thread(rerank, query, unique_candidates, top_n=RERANK_TOP_N)
 
 
-async def generate_rag_response(query: str, mode: str = "combined", user_email: Optional[str] = None, chat_history: List[dict] = None) -> dict:
+async def generate_rag_response(
+    query: str,
+    mode: str = "combined",
+    user_email: Optional[str] = None,
+    chat_history: List[dict] = None,
+    *,
+    is_admin: bool = False,
+    personal_emails: Optional[List[str]] = None,
+) -> dict:
     """Enhanced RAG Response with Context-Awareness and Strict Source Control."""
     
     # Enhancement #8: Query Cache (History-Aware)
     history_hash = hashlib.md5(str(chat_history).encode()).hexdigest() if chat_history else "no_history"
-    cache_key = f"{mode}:{user_email}:{query}:{history_hash}"
+    owner_hash = hashlib.sha256(
+        ",".join(sorted(personal_emails or [])).encode()
+    ).hexdigest()[:12]
+    cache_key = f"{mode}:{user_email}:{is_admin}:{owner_hash}:{query}:{history_hash}"
     
     if cache_key in _query_cache:
         logger.info("Serving from history-aware cache.")
@@ -661,7 +683,13 @@ async def generate_rag_response(query: str, mode: str = "combined", user_email: 
 
     # Step 1: Retrieve (Now Async)
     try:
-        ranked_results = await retrieve_context(query, mode, user_email)
+        ranked_results = await retrieve_context(
+            query,
+            mode,
+            user_email,
+            is_admin=is_admin,
+            personal_emails=personal_emails,
+        )
     except Exception as e:
         logger.error(f"Retrieval error: {e}")
         return {"answer": f"AI Retrieval Error: {str(e)}", "sources": []}

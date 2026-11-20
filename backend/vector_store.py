@@ -28,6 +28,9 @@ class QdrantVectorStore:
             if not api_key:
                 raise ValueError("QDRANT_API_KEY is required when QDRANT_URL is configured.")
             self.session = requests.Session()
+            # Qdrant Cloud is reached directly over HTTPS. Ignore machine-level
+            # proxy variables here so a stale local proxy cannot break requests.
+            self.session.trust_env = False
             self.session.headers.update({"api-key": api_key})
         else:
             if not local_path:
