@@ -8,7 +8,7 @@ from langchain_core.documents import Document
 # Add the current directory to sys.path so we can import rag
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-async def test_rag_retrieval_logic():
+async def _test_rag_retrieval_logic():
     mock_user_email = "test@example.com"
     mock_query = "What is the policy?"
     from rag import retrieve_context
@@ -48,9 +48,15 @@ async def test_rag_retrieval_logic():
         assert {doc.metadata["scope"] for doc, _ in personal} == {"personal"}
 
         scopes_searched.clear()
-        combined = await retrieve_context(mock_query, mode="combined", user_email=mock_user_email)
+        combined = await retrieve_context(
+            mock_query,
+            mode="combined",
+            user_email=mock_user_email,
+            personal_emails=["other@example.com"],
+        )
         assert set(scope for scope, _ in scopes_searched) == {"global", "personal"}
         assert any(scope == "personal" and email == mock_user_email for scope, email in scopes_searched)
+        assert ("personal", "other@example.com") not in scopes_searched
         assert {doc.metadata["scope"] for doc, _ in combined} == {"global", "personal"}
 
         scopes_searched.clear()
@@ -96,5 +102,8 @@ async def test_rag_retrieval_logic():
 
     print("Retrieval scope checks passed: users are scoped correctly; admin enterprise/combined include all user indexes")
 
+def test_rag_retrieval_logic():
+    asyncio.run(_test_rag_retrieval_logic())
+
 if __name__ == "__main__":
-    asyncio.run(test_rag_retrieval_logic())
+    test_rag_retrieval_logic()
