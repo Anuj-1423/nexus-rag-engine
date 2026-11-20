@@ -1,5 +1,4 @@
 import os
-import hmac
 import pymysql
 import logging
 import shutil
@@ -33,7 +32,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Enterprise Brain RAG API")
-ADMIN_EMAIL = "rahul@gmail.com"
 RUNTIME_STORAGE_DIR = (
     os.path.join("/tmp", "nexus-rag")
     if os.getenv("VERCEL") == "1"
@@ -81,16 +79,12 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     role: str = "employee"
-    admin_registration_token: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: str
     password: str
 
 from auth import hash_password, verify_password, create_token, verify_token
-
-def is_configured_admin(email: str) -> bool:
-    return email.strip().casefold() == ADMIN_EMAIL.casefold()
 
 async def get_current_user(authorization: str = Header(None)):
     if not authorization:
@@ -99,8 +93,6 @@ async def get_current_user(authorization: str = Header(None)):
     payload = verify_token(token)
     if not payload:
         raise HTTPException(401, "Invalid or expired session. Please login again.")
-    if payload.get("role") == "admin" and not is_configured_admin(payload.get("email", "")):
-        payload["role"] = "employee"
     return payload
 
 def verify_owner(email: str, current_user: dict):
@@ -111,16 +103,6 @@ def verify_owner(email: str, current_user: dict):
 def register(data: RegisterRequest):
     if data.role not in {"employee", "admin"}:
         raise HTTPException(400, "Unsupported account role")
-    role = "employee"
-    if data.role == "admin":
-        if not is_configured_admin(data.email):
-            raise HTTPException(403, "Admin registration is restricted to the configured email address")
-        expected_token = os.getenv("ADMIN_REGISTRATION_TOKEN", "")
-        if not expected_token or not data.admin_registration_token or not hmac.compare_digest(
-            data.admin_registration_token, expected_token
-        ):
-            raise HTTPException(403, "A valid admin registration token is required")
-        role = "admin"
 
     try:
         conn = get_db_connection(DB_NAME)
@@ -130,7 +112,7 @@ def register(data: RegisterRequest):
         hashed = hash_password(data.password)
         
         cursor.execute("INSERT INTO users (full_name, email, password_hash, role) VALUES (%s, %s, %s, %s)",
-                    (data.full_name, data.email, hashed, role))
+                    (data.full_name, data.email, hashed, data.role))
         conn.commit()
         return {"msg": "User registered successfully"}
     except pymysql.MySQLError as db_err:
@@ -169,15 +151,12 @@ def login(data: LoginRequest):
             else:
                 raise HTTPException(401, "Invalid email or password")
         
-        role = user[1]
-        if role == "admin" and not is_configured_admin(user[0]):
-            role = "employee"
-        token = create_token({"email": user[0], "role": role})
+        token = create_token({"email": user[0], "role": user[1]})
         
         return {
             "token": token, 
             "email": user[0], 
-            "role": role,
+            "role": user[1],
             "name": user[2], 
             "is_blocked": bool(user[3]), 
             "profile_pic": user[4]

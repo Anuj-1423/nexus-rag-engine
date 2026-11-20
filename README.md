@@ -59,7 +59,6 @@ Configure these Vercel environment variables:
 - `GROQ_MODEL` (optional; defaults to `openai/gpt-oss-120b`)
 - `GEMINI_MODEL` (optional; defaults to `gemini-3.5-flash-lite`)
 - `JWT_SECRET` (use a private random value)
-- `ADMIN_REGISTRATION_TOKEN` (required to create an admin account for the allowlisted email in `backend/main.py`)
 - `QDRANT_URL` and `QDRANT_API_KEY`
 - `COHERE_API_KEY` (optional)
 
