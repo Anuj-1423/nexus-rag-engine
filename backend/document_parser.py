@@ -6,6 +6,7 @@ with sections, headings, and metadata for downstream chunking.
 """
 
 import io
+import csv
 import re
 import os
 import logging
@@ -261,11 +262,29 @@ def parse_txt(file_bytes: bytes, filename: str) -> DocumentStructure:
     )
 
 
+def parse_csv(file_bytes: bytes, filename: str) -> DocumentStructure:
+    """Parse CSV rows into searchable, human-readable text."""
+    text = file_bytes.decode("utf-8-sig", errors="replace")
+    rows = csv.reader(io.StringIO(text))
+    rendered_rows = [" | ".join(cell.strip() for cell in row) for row in rows]
+    content = "\n".join(row for row in rendered_rows if row.strip())
+    title = _title_from_filename(filename)
+    sections = [Section(heading=title, level=1, content=content)] if content else []
+
+    return DocumentStructure(
+        filename=filename,
+        file_type="csv",
+        title=title,
+        sections=sections,
+        raw_text=content,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main Router
 # ---------------------------------------------------------------------------
 
-SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".md"}
+SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".md", ".csv"}
 
 def extract_document_structure(file_bytes: bytes, filename: str) -> DocumentStructure:
     """
@@ -289,6 +308,8 @@ def extract_document_structure(file_bytes: bytes, filename: str) -> DocumentStru
         return parse_docx(file_bytes, filename)
     elif ext in (".txt", ".md"):
         return parse_txt(file_bytes, filename)
+    elif ext == ".csv":
+        return parse_csv(file_bytes, filename)
     else:
         raise ValueError(
             f"Unsupported file type: '{ext}'. "

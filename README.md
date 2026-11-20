@@ -49,7 +49,7 @@ The backend serves the frontend as well. Open <http://127.0.0.1:8000/> for the w
 
 ## Deploy on Vercel
 
-Set the Vercel project **Root Directory** to the repository root (`.`), not `backend`. The root `pyproject.toml` points Vercel to the FastAPI app, and the root `requirements.txt` includes the backend dependencies. Leave the Build Command at its default; do not add another `backend/` prefix.
+Set the Vercel project **Root Directory** to the repository root (`.`), not `backend`. Vercel detects the FastAPI app through the root `app.py`; the root `requirements.txt` includes the backend dependencies. Leave the Build Command at its default.
 
 Configure these Vercel environment variables:
 
@@ -59,10 +59,13 @@ Configure these Vercel environment variables:
 - `GROQ_MODEL` (optional; defaults to `openai/gpt-oss-120b`)
 - `GEMINI_MODEL` (optional; defaults to `gemini-3.5-flash-lite`)
 - `JWT_SECRET` (use a private random value)
+- `ADMIN_REGISTRATION_TOKEN` (optional; required only to create an admin account through registration)
 - `QDRANT_URL` and `QDRANT_API_KEY`
 - `COHERE_API_KEY` (optional)
 
 Create a Qdrant Cloud free-tier cluster and add its cluster URL and API key in Vercel before deploying. The backend calls Qdrant Cloud's REST API directly, avoiding the larger Qdrant Python client and its gRPC/NumPy dependencies. Local development uses a SQLite-backed vector store when Qdrant Cloud variables are not configured; Vercel deployments require Qdrant Cloud because serverless local files are not durable. A lightweight pure-Python MySQL driver connects to Aiven. Text generation uses Groq first and falls back to Gemini 3.5 Flash-Lite; Google AI remains required for embeddings. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
+
+If startup logs show MySQL connection failures, check that the Aiven service is running, the host and port match its connection details, and its IP allowlist permits connections from Vercel. The app can now start and serve its health check and frontend during a database outage, but database-backed features still require a working MySQL connection.
 
 Existing local Chroma or embedded-Qdrant indexes are not copied to Qdrant Cloud or the new local SQLite store automatically; re-upload or migrate those documents. Profile photos written by the current profile endpoint use temporary serverless storage on Vercel and are not durable across function instances.
 

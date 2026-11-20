@@ -59,6 +59,12 @@
                     </select>
                 </div>
 
+                <div id="adminRegistrationTokenContainer" class="space-y-2 hidden">
+                    <label class="text-xs font-black uppercase tracking-widest text-text-muted" for="adminRegistrationToken">Admin Registration Key</label>
+                    <input type="password" id="adminRegistrationToken" autocomplete="off"
+                           class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-border rounded-xl outline-none focus:border-primary transition-all font-medium">
+                </div>
+
                 <div class="space-y-2">
                     <label class="text-xs font-black uppercase tracking-widest text-text-muted">Security Key</label>
                     <input type="password" id="password" placeholder="••••••••" required
@@ -78,6 +84,11 @@
 
     <script>
         const form = document.getElementById('registerForm');
+        const roleSelect = document.getElementById('role');
+        const adminTokenContainer = document.getElementById('adminRegistrationTokenContainer');
+        roleSelect.addEventListener('change', () => {
+            adminTokenContainer.classList.toggle('hidden', roleSelect.value !== 'admin');
+        });
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
@@ -99,13 +110,14 @@
             const fullName = document.getElementById('fullname').value.trim();
             const email = document.getElementById('email').value.trim();
             const role = document.getElementById('role').value;
+            const adminRegistrationToken = document.getElementById('adminRegistrationToken').value;
             const password = document.getElementById('password').value;
 
             try {
                 const res = await fetch('/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ full_name: fullName, email, role, password })
+                    body: JSON.stringify({ full_name: fullName, email, role, password, admin_registration_token: adminRegistrationToken })
                 });
                 const data = await res.json();
                 if (res.ok) {

@@ -1,4 +1,5 @@
 import os
+import hmac
 import pymysql
 import logging
 import shutil
@@ -23,6 +24,7 @@ except ImportError:
     pass
 
 from database import get_db_connection, DB_NAME, init_db
+from document_parser import SUPPORTED_EXTENSIONS
 from rag import ingest_document, generate_rag_response, delete_document_from_vector
 from sync_docs import sync_document_status
 
@@ -68,19 +70,17 @@ def startup_event():
         logger.info("Running document integrity sync...")
         sync_document_status()
     except Exception as e:
-        logger.error(f"FATAL: Database initialization failed: {e}")
-        if os.getenv("VERCEL") == "1":
-            raise
-        # We don't raise here so the server can at least start and show a health check,
-        # but the app won't work until DB is fixed.
-
-SUPPORTED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.csv'}
+        # Keep the HTTP function available when an external database has a
+        # transient outage. Database-backed endpoints will report their own
+        # errors, while health checks and the static frontend remain available.
+        logger.exception("Database initialization failed; continuing startup: %s", e)
 
 class RegisterRequest(BaseModel):
     full_name: str
     email: str
     password: str
     role: str = "employee"
+    admin_registration_token: Optional[str] = None
 
 class LoginRequest(BaseModel):
     email: str
@@ -103,6 +103,17 @@ def verify_owner(email: str, current_user: dict):
 
 @app.post('/register')
 def register(data: RegisterRequest):
+    if data.role not in {"employee", "admin"}:
+        raise HTTPException(400, "Unsupported account role")
+    role = "employee"
+    if data.role == "admin":
+        expected_token = os.getenv("ADMIN_REGISTRATION_TOKEN", "")
+        if not expected_token or not data.admin_registration_token or not hmac.compare_digest(
+            data.admin_registration_token, expected_token
+        ):
+            raise HTTPException(403, "A valid admin registration token is required")
+        role = "admin"
+
     try:
         conn = get_db_connection(DB_NAME)
         cursor = conn.cursor()
@@ -111,7 +122,7 @@ def register(data: RegisterRequest):
         hashed = hash_password(data.password)
         
         cursor.execute("INSERT INTO users (full_name, email, password_hash, role) VALUES (%s, %s, %s, %s)",
-                    (data.full_name, data.email, hashed, data.role))
+                    (data.full_name, data.email, hashed, role))
         conn.commit()
         return {"msg": "User registered successfully"}
     except pymysql.MySQLError as db_err:
