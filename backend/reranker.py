@@ -133,7 +133,9 @@ def rerank(
             "top_n": top_n,
         }
 
-        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        with requests.Session() as session:
+            session.trust_env = False
+            response = session.post(url, json=payload, headers=headers, timeout=15)
         response.raise_for_status()
 
         results = response.json().get("results", [])

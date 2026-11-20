@@ -167,9 +167,20 @@
                         <div id="uploadProgressBar" class="progress-bar"></div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="userDocGrid">
-                        <!-- Personal docs will load here -->
-                    </div>
+                    <section class="space-y-4">
+                        <div>
+                            <h4 class="font-bold">My uploads</h4>
+                            <p class="text-text-muted text-xs">Private documents uploaded to your account.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="userDocGrid"></div>
+                    </section>
+                    <section class="space-y-4">
+                        <div>
+                            <h4 class="font-bold">Shared enterprise documents</h4>
+                            <p class="text-text-muted text-xs">Admin uploads available in Enterprise and Combined chat modes.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sharedDocGrid"></div>
+                    </section>
                 </div>
 
                 <!-- History View -->
@@ -365,10 +376,11 @@
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 const data = await res.json();
-                const grid = document.getElementById('userDocGrid');
-                grid.innerHTML = data.length ? data.map(d => `
+                const personalGrid = document.getElementById('userDocGrid');
+                const sharedGrid = document.getElementById('sharedDocGrid');
+                const renderDocuments = (documents, shared = false) => documents.length ? documents.map(d => `
                     <div class="card p-6 flex flex-col gap-4 group hover:border-primary transition-all relative">
-                        ${d.scope === 'personal' ? `
+                        ${!shared ? `
                         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="deleteDocument('${d.filename}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" title="Delete Document">
                                 <span class="material-symbols-outlined text-sm">delete</span>
@@ -384,10 +396,12 @@
                         </div>
                         <div class="mt-2 flex gap-2">
                             <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase ${d.status === 'ready' ? 'bg-green-100 text-green-700' : (d.status === 'failed' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700')}">${d.status}</span>
-                            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase ${d.scope === 'global' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}">${d.scope}</span>
+                            <span class="px-2 py-1 rounded-md text-[10px] font-black uppercase ${shared ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'}">${shared ? 'shared by admin' : 'personal'}</span>
                         </div>
                     </div>
-                `).join('') : '<div class="col-span-full py-20 text-center opacity-50">No documents available yet.</div>';
+                `).join('') : `<div class="col-span-full py-8 text-center text-sm text-text-muted">${shared ? 'No shared enterprise documents yet.' : 'You have not uploaded any documents yet.'}</div>`;
+                personalGrid.innerHTML = renderDocuments(data.filter(d => d.scope === 'personal'));
+                sharedGrid.innerHTML = renderDocuments(data.filter(d => d.scope === 'global'), true);
             } catch (err) {
                 showToast('Failed to load document library', 'error');
             }

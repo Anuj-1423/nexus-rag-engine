@@ -361,23 +361,25 @@ def get_embeddings():
 
 
 def generate_with_groq(api_key: str, system_prompt: str, query: str) -> str:
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "model": GROQ_MODEL,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Question: {query}"},
-            ],
-            "max_completion_tokens": 1024,
-            "temperature": 0.2,
-        },
-        timeout=45,
-    )
+    with requests.Session() as session:
+        session.trust_env = False
+        response = session.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": GROQ_MODEL,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Question: {query}"},
+                ],
+                "max_completion_tokens": 1024,
+                "temperature": 0.2,
+            },
+            timeout=45,
+        )
     response.raise_for_status()
     choices = response.json().get("choices") or []
     if not choices:
@@ -747,6 +749,8 @@ async def generate_rag_response(
         "You are a helpful and accurate Enterprise Knowledge Assistant. "
         "Use the provided context and conversation history to answer the user's question. "
         "If the context doesn't contain the answer, politely inform the user that you don't have that information. "
+        "For comparisons, check the supplied sources for each named person or subject before answering. "
+        "If one side is supported by the context, explain that side and clearly state what information is missing for the other side. "
         f"{history_str}\n"
     )
 
@@ -789,7 +793,13 @@ async def generate_rag_response(
     else:
         logger.info("GROQ_API_KEY is not configured; using Gemini fallback.")
 
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(
+        api_key=api_key,
+        http_options=genai.types.HttpOptions(
+            client_args={"trust_env": False},
+            async_client_args={"trust_env": False},
+        ),
+    )
     last_error = None
     for attempt in range(2):
         try:
