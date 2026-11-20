@@ -586,12 +586,13 @@ async def retrieve_context(
     is_admin: bool = False,
     personal_emails: Optional[List[str]] = None,
 ) -> list:
-    """Search shared documents and the private indexes allowed for this caller."""
+    """Search only the document scopes selected for the caller and chat mode."""
 
-    # Shared enterprise documents are visible in every mode. Enterprise mode
-    # searches only shared documents; personal/combined also search private data.
-    global_path = get_index_identifier("global")
-    indices_to_search = [(global_path, "global", None)]
+    indices_to_search = []
+    if mode != "personal":
+        global_path = get_index_identifier("global")
+        indices_to_search.append((global_path, "global", None))
+
     if mode != "enterprise":
         # Admin combined chat can query every user's private index. Regular
         # users are always limited to their own private index.
