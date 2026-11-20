@@ -156,9 +156,11 @@ _hf_embeddings = None
 class GoogleAIEmbeddingsOfficial(Embeddings):
     """Custom wrapper for Google AI Embeddings using the official SDK."""
     def __init__(self):
-        api_key = os.getenv("GOOGLE_API_KEY")
+        api_key = os.getenv("GOOGLE_EMBEDDING_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            raise ValueError("GOOGLE_API_KEY is missing from environment. Please add it to your .env file.")
+            raise ValueError(
+                "GOOGLE_EMBEDDING_API_KEY or GOOGLE_API_KEY is missing from the environment."
+            )
         self.client = genai.Client(api_key=api_key)
         self.model_candidates = [
             "gemini-embedding-001",
@@ -180,7 +182,7 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
             raise ValueError(
                 "Google AI could not create embeddings because the embedding quota may be exhausted, "
                 "the request may be rate-limited, or the model may be unavailable. Check the Vercel "
-                "GOOGLE_API_KEY and its Gemini API embedding quota. Local embeddings are disabled "
+                "GOOGLE_EMBEDDING_API_KEY (or GOOGLE_API_KEY) and its Gemini embedding quota. Local embeddings are disabled "
                 "for this serverless deployment."
             )
 

@@ -11,6 +11,18 @@ import rag
 
 
 class GeminiModelFallbackTests(unittest.IsolatedAsyncioTestCase):
+    def test_embedding_provider_prefers_dedicated_key(self):
+        with (
+            patch.dict(os.environ, {
+                "GOOGLE_API_KEY": "generation-key",
+                "GOOGLE_EMBEDDING_API_KEY": "embedding-key",
+            }),
+            patch.object(rag.genai, "Client") as client,
+        ):
+            rag.GoogleAIEmbeddingsOfficial()
+
+        client.assert_called_once_with(api_key="embedding-key")
+
     def test_embedding_quota_error_explains_required_remote_configuration(self):
         client = SimpleNamespace(models=SimpleNamespace())
         client.models.embed_content = lambda **kwargs: (_ for _ in ()).throw(
@@ -22,7 +34,7 @@ class GeminiModelFallbackTests(unittest.IsolatedAsyncioTestCase):
             patch.object(rag, "USE_LOCAL_EMBEDDINGS", False),
         ):
             embeddings = rag.GoogleAIEmbeddingsOfficial()
-            with self.assertRaisesRegex(ValueError, "Check the Vercel GOOGLE_API_KEY"):
+            with self.assertRaisesRegex(ValueError, "Check the Vercel GOOGLE_EMBEDDING_API_KEY"):
                 embeddings.embed_query("test query")
 
     async def test_groq_failure_falls_back_to_gemini(self):

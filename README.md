@@ -22,6 +22,7 @@ DB_PASSWORD=
 DB_NAME=defaultdb
 DB_PORT=3306
 GOOGLE_API_KEY=your-google-ai-api-key
+GOOGLE_EMBEDDING_API_KEY=your-google-ai-api-key-with-embedding-quota
 GROQ_API_KEY=your-groq-api-key
 GROQ_MODEL=openai/gpt-oss-120b
 GEMINI_MODEL=gemini-3.5-flash-lite
@@ -55,6 +56,7 @@ Configure these Vercel environment variables:
 
 - `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_PORT`
 - `GOOGLE_API_KEY`
+- `GOOGLE_EMBEDDING_API_KEY` (optional; dedicated Gemini embedding key, falls back to `GOOGLE_API_KEY`)
 - `GROQ_API_KEY` (primary text generation)
 - `GROQ_MODEL` (optional; defaults to `openai/gpt-oss-120b`)
 - `GEMINI_MODEL` (optional; defaults to `gemini-3.5-flash-lite`)
@@ -62,7 +64,7 @@ Configure these Vercel environment variables:
 - `QDRANT_URL` and `QDRANT_API_KEY`
 - `COHERE_API_KEY` (optional)
 
-Create a Qdrant Cloud free-tier cluster and add its cluster URL and API key in Vercel before deploying. The backend calls Qdrant Cloud's REST API directly, avoiding the larger Qdrant Python client and its gRPC/NumPy dependencies. Local development uses a SQLite-backed vector store when Qdrant Cloud variables are not configured; Vercel deployments require Qdrant Cloud because serverless local files are not durable. A lightweight pure-Python MySQL driver connects to Aiven. Text generation uses Groq first and falls back to Gemini 3.5 Flash-Lite; Google AI remains required for embeddings. The Vercel `GOOGLE_API_KEY` must have Gemini embedding access and available quota; local model fallback is disabled in serverless deployments. Semantic chunking is optional; when its extra package is absent, the app uses recursive chunking.
+Create a Qdrant Cloud free-tier cluster and add its cluster URL and API key in Vercel before deploying. The backend calls Qdrant Cloud's REST API directly, avoiding the larger Qdrant Python client and its gRPC/NumPy dependencies. Local development uses a SQLite-backed vector store when Qdrant Cloud variables are not configured; Vercel deployments require Qdrant Cloud because serverless local files are not durable. A lightweight pure-Python MySQL driver connects to Aiven. Text generation uses Groq first and falls back to Gemini 3.5 Flash-Lite; Google AI remains required for embeddings. The Vercel `GOOGLE_EMBEDDING_API_KEY` (or fallback `GOOGLE_API_KEY`) must have Gemini embedding access and available quota; local model fallback is disabled in serverless deployments.
 
 If startup logs show MySQL connection failures, check that the Aiven service is running, the host and port match its connection details, and its IP allowlist permits connections from Vercel. The app can now start and serve its health check and frontend during a database outage, but database-backed features still require a working MySQL connection.
 
