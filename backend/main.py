@@ -33,6 +33,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Enterprise Brain RAG API")
+ADMIN_EMAIL = "rahul@gmail.com"
 RUNTIME_STORAGE_DIR = (
     os.path.join("/tmp", "nexus-rag")
     if os.getenv("VERCEL") == "1"
@@ -89,8 +90,7 @@ class LoginRequest(BaseModel):
 from auth import hash_password, verify_password, create_token, verify_token
 
 def is_configured_admin(email: str) -> bool:
-    allowed_admin_email = os.getenv("ADMIN_EMAIL", "").strip()
-    return bool(allowed_admin_email and email.strip().casefold() == allowed_admin_email.casefold())
+    return email.strip().casefold() == ADMIN_EMAIL.casefold()
 
 async def get_current_user(authorization: str = Header(None)):
     if not authorization:
