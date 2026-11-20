@@ -53,8 +53,8 @@ class FakeConnection:
         pass
 
 
-@pytest.mark.parametrize("mode", ["personal", "enterprise", "combined"])
-def test_chat_history_is_limited_to_active_mode(monkeypatch, mode):
+@pytest.mark.parametrize("requested_mode", ["personal", "enterprise", "combined"])
+def test_regular_user_chat_always_uses_combined_scope(monkeypatch, requested_mode):
     conn = FakeConnection()
     monkeypatch.setattr(main, "get_db_connection", lambda *_: conn)
     captured = {}
@@ -68,12 +68,14 @@ def test_chat_history_is_limited_to_active_mode(monkeypatch, mode):
     response = TestClient(main.app).post(
         "/ask",
         headers={"Authorization": f"Bearer {token}"},
-        json={"email": "employee@example.com", "question": "test", "mode": mode},
+        json={"email": "employee@example.com", "question": "test", "mode": requested_mode},
     )
 
     assert response.status_code == 200
     assert "scope = %s" in conn.fake_cursor.history_query
-    assert conn.fake_cursor.history_params == ("employee@example.com", mode)
+    assert conn.fake_cursor.history_params == ("employee@example.com", "combined")
+    assert captured["mode"] == "combined"
+    assert conn.fake_cursor.params == ("employee@example.com", "test", "test answer", "combined")
     assert captured["chat_history"] == [
         {"question": "older same-mode question", "answer": "older same-mode answer"},
         {"question": "latest same-mode question", "answer": "latest same-mode answer"},

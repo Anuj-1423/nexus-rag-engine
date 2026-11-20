@@ -90,22 +90,6 @@
                     
                     <h1 class="text-lg font-bold truncate max-w-[120px] sm:max-w-none" id="pageTitle">Assistant</h1>
                     
-                    <!-- Mode Toggle -->
-                    <!-- Desktop Mode Toggle -->
-                    <div id="modeToggle" class="hidden md:flex items-center p-1 bg-gray-100 dark:bg-slate-800 rounded-xl border border-border">
-                        <button onclick="switchMode('enterprise')" id="modeEnterprise" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-text-muted hover:text-primary">ENTERPRISE</button>
-                        <button onclick="switchMode('personal')" id="modePersonal" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-text-muted hover:text-primary">PERSONAL</button>
-                        <button onclick="switchMode('combined')" id="modeCombined" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-white dark:bg-slate-700 shadow-sm text-primary">COMBINED</button>
-                    </div>
-
-                    <!-- Mobile Mode Selector -->
-                    <div class="md:hidden flex items-center">
-                        <select onchange="switchMode(this.value)" id="mobileModeSelector" class="bg-gray-100 dark:bg-slate-800 text-xs font-bold rounded-lg border border-border px-2 py-1.5 outline-none text-primary">
-                            <option value="enterprise">ENTERPRISE</option>
-                            <option value="personal">PERSONAL</option>
-                            <option value="combined" selected>COMBINED</option>
-                        </select>
-                    </div>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -134,8 +118,8 @@
                             <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/10">
                                 <span class="material-symbols-outlined text-primary text-4xl" id="brainIcon">auto_awesome</span>
                             </div>
-                            <h2 class="text-3xl font-bold mb-2" id="welcomeTitle">Hello, how can I help?</h2>
-                            <p class="text-text-muted max-w-md" id="welcomeSubtitle">I'm currently connected to the Enterprise Knowledge Base. Ask me anything about company policies, documents, or data.</p>
+                            <h2 class="text-3xl font-bold mb-2" id="welcomeTitle">Unified Brain</h2>
+                            <p class="text-text-muted max-w-md" id="welcomeSubtitle">Ask about admin-shared documents and your own uploads together.</p>
                         </div>
                     </div>
                     
@@ -287,7 +271,7 @@
         }
         // Dark mode already initialized in <head>
 
-        let currentMode = localStorage.getItem('retrievalMode') || 'combined'; // 'enterprise', 'personal', or 'combined'
+        const currentMode = 'combined';
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
 
@@ -328,53 +312,6 @@
             if (tab === 'library') loadLibrary();
             if (tab === 'history') loadHistory();
             if (tab === 'stats') loadStats();
-        }
-
-        function switchMode(mode) {
-            const modeChanged = currentMode !== mode;
-            currentMode = mode;
-            localStorage.setItem('retrievalMode', mode);
-            
-            const enterpriseBtn = document.getElementById('modeEnterprise');
-            const personalBtn = document.getElementById('modePersonal');
-            const combinedBtn = document.getElementById('modeCombined');
-            
-            // Reset all
-            [enterpriseBtn, personalBtn, combinedBtn].forEach(btn => {
-                btn.classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-primary');
-                btn.classList.add('text-text-muted');
-            });
-
-            // Set active
-            const activeBtn = mode === 'enterprise' ? enterpriseBtn : (mode === 'personal' ? personalBtn : combinedBtn);
-            if (activeBtn) {
-                activeBtn.classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-primary');
-                activeBtn.classList.remove('text-text-muted');
-            }
-
-            // Sync Mobile Selector
-            const mobileSelector = document.getElementById('mobileModeSelector');
-            if (mobileSelector) mobileSelector.value = mode;
-
-            if (mode === 'enterprise') {
-                document.getElementById('welcomeTitle').innerText = "Enterprise Brain";
-                document.getElementById('welcomeSubtitle').innerText = "Connected to the company-wide knowledge base.";
-                document.getElementById('brainIcon').innerText = "hub";
-            } else if (mode === 'personal') {
-                document.getElementById('welcomeTitle').innerText = "Personal Brain";
-                document.getElementById('welcomeSubtitle').innerText = "Searching only your private document collection.";
-                document.getElementById('brainIcon').innerText = "person";
-            } else {
-                document.getElementById('welcomeTitle').innerText = "Unified Brain";
-                document.getElementById('welcomeSubtitle').innerText = "Searching shared enterprise documents and your private collection.";
-                document.getElementById('brainIcon').innerText = "auto_awesome";
-            }
-
-            // Keep visible conversations separate so answers from one retrieval
-            // scope are not mistaken for answers from another.
-            if (modeChanged && document.getElementById('chatMessages')) {
-                restoreChatFromLocal();
-            }
         }
 
         async function loadLibrary() {
@@ -633,12 +570,10 @@
                     <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/10">
                         <span class="material-symbols-outlined text-primary text-4xl" id="brainIcon">auto_awesome</span>
                     </div>
-                    <h2 class="text-3xl font-bold mb-2" id="welcomeTitle">Hello, how can I help?</h2>
-                    <p class="text-text-muted max-w-md" id="welcomeSubtitle">I'm currently connected to the Enterprise Knowledge Base. Ask me anything about company policies, documents, or data.</p>
+                    <h2 class="text-3xl font-bold mb-2" id="welcomeTitle">Unified Brain</h2>
+                    <p class="text-text-muted max-w-md" id="welcomeSubtitle">Ask about admin-shared documents and your own uploads together.</p>
                 </div>
             `;
-            // Call switchMode to re-apply the icon based on current mode
-            switchMode(currentMode);
         }
 
         function formatToIST(dateStr) {
@@ -730,7 +665,6 @@
         // Initialize
         const savedTab = localStorage.getItem('activeUserTab') || 'chat';
         switchTab(savedTab);
-        switchMode(currentMode); // Apply current mode UI
         loadLibrary();
         loadHistory();
         loadStats();

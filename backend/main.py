@@ -305,6 +305,10 @@ class AskRequest(BaseModel):
 @app.post('/ask')
 async def ask_question(data: AskRequest, current_user: dict = Depends(get_current_user)):
     verify_owner(data.email, current_user)
+    is_admin = current_user.get("role") == "admin"
+    # Regular user chat always combines shared enterprise and personal indexes.
+    # Keep the role-specific mode control available only to admins.
+    chat_mode = data.mode if is_admin else "combined"
     # Use to_thread for blocking database calls
     # Use to_thread for blocking database calls
     conn = await asyncio.to_thread(get_db_connection, DB_NAME)
@@ -319,14 +323,13 @@ async def ask_question(data: AskRequest, current_user: dict = Depends(get_curren
         await asyncio.to_thread(
             cursor.execute,
             "SELECT question, answer FROM chats WHERE email = %s AND scope = %s ORDER BY created_at DESC LIMIT 5",
-            (data.email, data.mode)
+            (data.email, chat_mode)
         )
         history_rows = list(reversed(cursor.fetchall()))
         chat_history = [{"question": r[0], "answer": r[1]} for r in history_rows]
 
-        is_admin = current_user.get("role") == "admin"
         personal_emails = None
-        if is_admin and data.mode in {"enterprise", "combined"}:
+        if is_admin and chat_mode in {"enterprise", "combined"}:
             await asyncio.to_thread(
                 cursor.execute,
                 "SELECT DISTINCT owner_email FROM documents WHERE scope = 'personal' AND status = 'ready' AND owner_email IS NOT NULL",
@@ -335,7 +338,7 @@ async def ask_question(data: AskRequest, current_user: dict = Depends(get_curren
 
         res = await generate_rag_response(
             data.question,
-            mode=data.mode,
+            mode=chat_mode,
             user_email=data.email,
             chat_history=chat_history,
             is_admin=is_admin,
@@ -345,7 +348,7 @@ async def ask_question(data: AskRequest, current_user: dict = Depends(get_curren
         await asyncio.to_thread(
             cursor.execute,
             "INSERT INTO chats (email, question, answer, scope) VALUES (%s, %s, %s, %s)",
-            (data.email, data.question, res['answer'], data.mode)
+            (data.email, data.question, res['answer'], chat_mode)
         )
         await asyncio.to_thread(conn.commit)
         return res
