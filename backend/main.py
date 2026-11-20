@@ -88,6 +88,10 @@ class LoginRequest(BaseModel):
 
 from auth import hash_password, verify_password, create_token, verify_token
 
+def is_configured_admin(email: str) -> bool:
+    allowed_admin_email = os.getenv("ADMIN_EMAIL", "").strip()
+    return bool(allowed_admin_email and email.strip().casefold() == allowed_admin_email.casefold())
+
 async def get_current_user(authorization: str = Header(None)):
     if not authorization:
         raise HTTPException(401, "Authorization header missing")
@@ -95,6 +99,8 @@ async def get_current_user(authorization: str = Header(None)):
     payload = verify_token(token)
     if not payload:
         raise HTTPException(401, "Invalid or expired session. Please login again.")
+    if payload.get("role") == "admin" and not is_configured_admin(payload.get("email", "")):
+        payload["role"] = "employee"
     return payload
 
 def verify_owner(email: str, current_user: dict):
@@ -107,8 +113,7 @@ def register(data: RegisterRequest):
         raise HTTPException(400, "Unsupported account role")
     role = "employee"
     if data.role == "admin":
-        allowed_admin_email = os.getenv("ADMIN_EMAIL", "").strip()
-        if not allowed_admin_email or data.email.strip().casefold() != allowed_admin_email.casefold():
+        if not is_configured_admin(data.email):
             raise HTTPException(403, "Admin registration is restricted to the configured email address")
         expected_token = os.getenv("ADMIN_REGISTRATION_TOKEN", "")
         if not expected_token or not data.admin_registration_token or not hmac.compare_digest(
@@ -164,12 +169,15 @@ def login(data: LoginRequest):
             else:
                 raise HTTPException(401, "Invalid email or password")
         
-        token = create_token({"email": user[0], "role": user[1]})
+        role = user[1]
+        if role == "admin" and not is_configured_admin(user[0]):
+            role = "employee"
+        token = create_token({"email": user[0], "role": role})
         
         return {
             "token": token, 
             "email": user[0], 
-            "role": user[1], 
+            "role": role,
             "name": user[2], 
             "is_blocked": bool(user[3]), 
             "profile_pic": user[4]
