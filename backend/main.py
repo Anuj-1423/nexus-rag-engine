@@ -107,6 +107,9 @@ def register(data: RegisterRequest):
         raise HTTPException(400, "Unsupported account role")
     role = "employee"
     if data.role == "admin":
+        allowed_admin_email = os.getenv("ADMIN_EMAIL", "").strip()
+        if not allowed_admin_email or data.email.strip().casefold() != allowed_admin_email.casefold():
+            raise HTTPException(403, "Admin registration is restricted to the configured email address")
         expected_token = os.getenv("ADMIN_REGISTRATION_TOKEN", "")
         if not expected_token or not data.admin_registration_token or not hmac.compare_digest(
             data.admin_registration_token, expected_token
