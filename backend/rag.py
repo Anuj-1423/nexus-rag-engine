@@ -177,7 +177,12 @@ class GoogleAIEmbeddingsOfficial(Embeddings):
 
     def _fallback_to_local_embeddings(self, contents):
         if not USE_LOCAL_EMBEDDINGS:
-            raise ValueError("Local embedding fallback is disabled in this deployment to preserve memory on Render.")
+            raise ValueError(
+                "Google AI could not create embeddings because the embedding quota may be exhausted, "
+                "the request may be rate-limited, or the model may be unavailable. Check the Vercel "
+                "GOOGLE_API_KEY and its Gemini API embedding quota. Local embeddings are disabled "
+                "for this serverless deployment."
+            )
 
         if self._local_embeddings is None:
             try:

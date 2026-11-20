@@ -3,44 +3,58 @@ import os
 import sys
 from unittest.mock import MagicMock, patch
 
+from langchain_core.documents import Document
+
 # Add the current directory to sys.path so we can import rag
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 async def test_rag_retrieval_logic():
-    print("Starting RAG Retrieval Logic Test...")
-    
-    # Mock data
     mock_user_email = "test@example.com"
     mock_query = "What is the policy?"
-    
-    # Patch the vector-store boundary and hybrid search to avoid external services.
-    with patch("rag.get_embeddings") as mock_get_emb, \
-         patch("rag.get_vector_store") as mock_vector_store, \
-         patch("rag.hybrid_search") as mock_hybrid, \
-         patch("rag.rerank") as mock_rerank:
-        
-        # Setup mocks
-        mock_get_emb.return_value = MagicMock()
-        mock_vector_store.return_value.collection_exists.return_value = True
-        mock_hybrid.return_value = [MagicMock(page_content="Mock Result", metadata={})]
-        mock_rerank.return_value = [{"content": "Mock Result", "score": 1.0}]
-        
-        from rag import retrieve_context
-        
-        print("\n--- Testing ENTERPRISE Mode ---")
-        results = await retrieve_context(mock_query, mode="enterprise", user_email=mock_user_email)
-        print(f"OK: Enterprise Mode returned {len(results)} results.")
-        # Should only call hybrid_search once for global
-        
-        print("\n--- Testing PERSONAL Mode ---")
-        results = await retrieve_context(mock_query, mode="personal", user_email=mock_user_email)
-        print(f"OK: Personal Mode returned {len(results)} results.")
-        
-        print("\n--- Testing COMBINED Mode ---")
-        results = await retrieve_context(mock_query, mode="combined", user_email=mock_user_email)
-        print(f"OK: Combined Mode returned {len(results)} results.")
-        
-    print("\nAll retrieval logic tests passed (Mocked)!")
+    from rag import retrieve_context
+
+    class Store:
+        def __init__(self, scope):
+            self.scope = scope
+
+        def collection_exists(self):
+            return True
+
+    scopes_searched = []
+    global_doc = Document(page_content="Global company policy", metadata={"scope": "global"})
+    personal_doc = Document(page_content="Personal vacation notes", metadata={"scope": "personal"})
+
+    def make_store(scope, user_email, embeddings):
+        scopes_searched.append((scope, user_email))
+        return Store(scope)
+
+    async def search_scope(query, store, index_path, k):
+        return [global_doc] if store.scope == "global" else [personal_doc]
+
+    def rerank(query, docs, top_n):
+        return [(doc, 0.1) for doc in docs[:top_n]]
+
+    with patch("rag.get_embeddings", return_value=MagicMock()), \
+         patch("rag.get_vector_store", side_effect=make_store), \
+         patch("rag.hybrid_search", side_effect=search_scope), \
+         patch("rag.rerank", side_effect=rerank):
+        enterprise = await retrieve_context(mock_query, mode="enterprise", user_email=mock_user_email)
+        assert [scope for scope, _ in scopes_searched] == ["global"]
+        assert {doc.metadata["scope"] for doc, _ in enterprise} == {"global"}
+
+        scopes_searched.clear()
+        personal = await retrieve_context(mock_query, mode="personal", user_email=mock_user_email)
+        assert [scope for scope, _ in scopes_searched] == ["personal"]
+        assert scopes_searched[0][1] == mock_user_email
+        assert {doc.metadata["scope"] for doc, _ in personal} == {"personal"}
+
+        scopes_searched.clear()
+        combined = await retrieve_context(mock_query, mode="combined", user_email=mock_user_email)
+        assert set(scope for scope, _ in scopes_searched) == {"global", "personal"}
+        assert any(scope == "personal" and email == mock_user_email for scope, email in scopes_searched)
+        assert {doc.metadata["scope"] for doc, _ in combined} == {"global", "personal"}
+
+    print("Retrieval scope checks passed: enterprise=global, personal=user-only, combined=global+user")
 
 if __name__ == "__main__":
     asyncio.run(test_rag_retrieval_logic())

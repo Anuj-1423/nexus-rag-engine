@@ -11,6 +11,20 @@ import rag
 
 
 class GeminiModelFallbackTests(unittest.IsolatedAsyncioTestCase):
+    def test_embedding_quota_error_explains_required_remote_configuration(self):
+        client = SimpleNamespace(models=SimpleNamespace())
+        client.models.embed_content = lambda **kwargs: (_ for _ in ()).throw(
+            RuntimeError("429 quota exceeded")
+        )
+        with (
+            patch.dict(os.environ, {"GOOGLE_API_KEY": "test-key"}),
+            patch.object(rag.genai, "Client", return_value=client),
+            patch.object(rag, "USE_LOCAL_EMBEDDINGS", False),
+        ):
+            embeddings = rag.GoogleAIEmbeddingsOfficial()
+            with self.assertRaisesRegex(ValueError, "Check the Vercel GOOGLE_API_KEY"):
+                embeddings.embed_query("test query")
+
     async def test_groq_failure_falls_back_to_gemini(self):
         client = SimpleNamespace(models=SimpleNamespace())
         attempted_models = []
