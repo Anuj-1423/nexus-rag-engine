@@ -331,6 +331,7 @@
         }
 
         function switchMode(mode) {
+            const modeChanged = currentMode !== mode;
             currentMode = mode;
             localStorage.setItem('retrievalMode', mode);
             
@@ -367,6 +368,12 @@
                 document.getElementById('welcomeTitle').innerText = "Unified Brain";
                 document.getElementById('welcomeSubtitle').innerText = "Searching shared enterprise documents and your private collection.";
                 document.getElementById('brainIcon').innerText = "auto_awesome";
+            }
+
+            // Keep visible conversations separate so answers from one retrieval
+            // scope are not mistaken for answers from another.
+            if (modeChanged && document.getElementById('chatMessages')) {
+                restoreChatFromLocal();
             }
         }
 
@@ -603,13 +610,13 @@
         function saveChatToLocal() {
             const container = document.getElementById('chatMessages');
             if (userEmail) {
-                localStorage.setItem(`userChatHTML_${userEmail}`, container.innerHTML);
+                localStorage.setItem(`userChatHTML_${userEmail}_${currentMode}`, container.innerHTML);
             }
         }
 
         function restoreChatFromLocal() {
             if (!userEmail) return;
-            const saved = localStorage.getItem(`userChatHTML_${userEmail}`);
+            const saved = localStorage.getItem(`userChatHTML_${userEmail}_${currentMode}`);
             if (saved) {
                 document.getElementById('chatMessages').innerHTML = saved;
                 const container = document.getElementById('chatMessages');
@@ -620,7 +627,7 @@
         }
 
         function startNewChat() {
-            if (userEmail) localStorage.removeItem(`userChatHTML_${userEmail}`);
+            if (userEmail) localStorage.removeItem(`userChatHTML_${userEmail}_${currentMode}`);
             document.getElementById('chatMessages').innerHTML = `
                 <div id="welcomeState" class="flex flex-col items-center justify-center py-20 text-center">
                     <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-indigo-500/10">

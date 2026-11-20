@@ -318,8 +318,8 @@ async def ask_question(data: AskRequest, current_user: dict = Depends(get_curren
         # Fetch recent chat history for context
         await asyncio.to_thread(
             cursor.execute,
-            "SELECT question, answer FROM chats WHERE email = %s ORDER BY created_at DESC LIMIT 5",
-            (data.email,)
+            "SELECT question, answer FROM chats WHERE email = %s AND scope = %s ORDER BY created_at DESC LIMIT 5",
+            (data.email, data.mode)
         )
         history_rows = list(reversed(cursor.fetchall()))
         chat_history = [{"question": r[0], "answer": r[1]} for r in history_rows]

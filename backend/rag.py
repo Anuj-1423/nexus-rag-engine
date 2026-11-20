@@ -679,7 +679,7 @@ async def generate_rag_response(
     owner_hash = hashlib.sha256(
         ",".join(sorted(personal_emails or [])).encode()
     ).hexdigest()[:12]
-    cache_key = f"{mode}:{user_email}:{is_admin}:{owner_hash}:{query}:{history_hash}"
+    cache_key = f"mode-scope-v3:{mode}:{user_email}:{is_admin}:{owner_hash}:{query}:{history_hash}"
     
     if cache_key in _query_cache:
         logger.info("Serving from history-aware cache.")
@@ -753,6 +753,32 @@ async def generate_rag_response(
         "If one side is supported by the context, explain that side and clearly state what information is missing for the other side. "
         f"{history_str}\n"
     )
+
+    if mode == "personal":
+        system_prompt += (
+            "SCOPE: Personal mode contains only the signed-in user's private documents. "
+            "Never use or reveal enterprise documents or another user's private information. "
+            "For a comparison that mentions someone outside this scope, first give the signed-in user's supported details, "
+            "explicitly say the other person's details are not available in Personal mode, and invite a question about the available details or a switch to Combined mode. "
+        )
+    elif mode == "enterprise" and not is_admin:
+        system_prompt += (
+            "SCOPE: Enterprise mode contains shared admin-uploaded documents only. "
+            "Never use or reveal a user's private documents. "
+            "For a comparison involving a person whose private document is absent, first explain the available shared-document information, "
+            "explicitly say personal user details are not available in Enterprise mode, and invite a focused follow-up about the person covered or a switch to Combined mode. "
+        )
+    elif mode == "enterprise" and is_admin:
+        system_prompt += (
+            "SCOPE: Admin Enterprise mode may include shared documents and all users' ready personal documents. "
+            "Use relevant evidence across those provided documents. "
+        )
+    elif mode == "combined":
+        system_prompt += (
+            "SCOPE: Combined mode merges the shared enterprise documents with the private documents available to this signed-in user. "
+            "For administrators, the provided private documents may include all users' ready uploads. "
+            "Compare all relevant provided sources together. "
+        )
 
     if asks_for_sources:
         system_prompt += (
